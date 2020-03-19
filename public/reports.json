@@ -1,0 +1,236 @@
+[
+  {
+    "protocol": "grpc",
+    "direction": "in",
+    "rate": 4000,
+    "RunType": "GRPC Health PayloadLength=200",
+    "Labels": "ver-cache-and-buffer 2020Mar07_17h43m53s Iter: 1 Dur: 10s Conns: 4 Streams: 4",
+    "StartTime": "2020-03-07T17:46:38.982182888Z",
+    "RequestedQPS": "4000",
+    "RequestedDuration": "10s",
+    "ActualQPS": 3998.869612734142,
+    "ActualDuration": 10002826767,
+    "NumThreads": 16,
+    "Version": "1.3.2-pre",
+    "DurationHistogram": {
+      "Count": 40000,
+      "Min": 0.000416522,
+      "Max": 0.011137139,
+      "Sum": 100.59139148599999,
+      "Avg": 0.0025147847871499996,
+      "StdDev": 0.0013567386168156976,
+      "Data": [
+        {
+          "Start": 0.000416522,
+          "End": 0.001,
+          "Percent": 2.415,
+          "Count": 966
+        },
+        {
+          "Start": 0.001,
+          "End": 0.002,
+          "Percent": 44.7925,
+          "Count": 16951
+        },
+        {
+          "Start": 0.002,
+          "End": 0.003,
+          "Percent": 73.1675,
+          "Count": 11350
+        },
+        {
+          "Start": 0.003,
+          "End": 0.004,
+          "Percent": 85.2025,
+          "Count": 4814
+        },
+        {
+          "Start": 0.004,
+          "End": 0.005,
+          "Percent": 93.3825,
+          "Count": 3272
+        },
+        {
+          "Start": 0.005,
+          "End": 0.006,
+          "Percent": 97.8475,
+          "Count": 1786
+        },
+        {
+          "Start": 0.006,
+          "End": 0.007,
+          "Percent": 99.305,
+          "Count": 583
+        },
+        {
+          "Start": 0.007,
+          "End": 0.008,
+          "Percent": 99.67,
+          "Count": 146
+        },
+        {
+          "Start": 0.008,
+          "End": 0.009000000000000001,
+          "Percent": 99.82,
+          "Count": 60
+        },
+        {
+          "Start": 0.009000000000000001,
+          "End": 0.01,
+          "Percent": 99.9475,
+          "Count": 51
+        },
+        {
+          "Start": 0.01,
+          "End": 0.011,
+          "Percent": 99.9975,
+          "Count": 20
+        },
+        {
+          "Start": 0.011,
+          "End": 0.011137139,
+          "Percent": 100,
+          "Count": 1
+        }
+      ],
+      "Percentiles": [
+        {
+          "Percentile": 50,
+          "Value": 0.00218352422907489
+        },
+        {
+          "Percentile": 75,
+          "Value": 0.003152264229331117
+        },
+        {
+          "Percentile": 90,
+          "Value": 0.004586491442542788
+        },
+        {
+          "Percentile": 99,
+          "Value": 0.006790737564322467
+        },
+        {
+          "Percentile": 99.9,
+          "Value": 0.009627450980392197
+        }
+      ]
+    },
+    "Exactly": 0,
+    "Jitter": false,
+    "RetCodes": {
+      "SERVING": 40000
+    },
+    "Destination": "http://proxy:4143",
+    "Streams": 4,
+    "Ping": false
+  },
+  {
+    "protocol": "grpc",
+    "direction": "in",
+    "rate": 6000,
+    "RunType": "GRPC Health PayloadLength=200",
+    "Labels": "ver-cache-and-buffer 2020Mar07_17h43m53s Iter: 1 Dur: 10s Conns: 4 Streams: 4",
+    "StartTime": "2020-03-07T17:46:49.678000338Z",
+    "RequestedQPS": "6000",
+    "RequestedDuration": "10s",
+    "ActualQPS": 5074.725493177155,
+    "ActualDuration": 10044287138,
+    "NumThreads": 16,
+    "Version": "1.3.2-pre",
+    "DurationHistogram": {
+      "Count": 50972,
+      "Min": 0.000789934,
+      "Max": 0.044390706,
+      "Sum": 157.02665471799997,
+      "Avg": 0.0030806453487797216,
+      "StdDev": 0.0009316964237233482,
+      "Data": [
+        {
+          "Start": 0.000789934,
+          "End": 0.001,
+          "Percent": 0.3590206387820764,
+          "Count": 183
+        },
+        {
+          "Start": 0.001,
+          "End": 0.002,
+          "Percent": 11.12571607941615,
+          "Count": 5488
+        },
+        {
+          "Start": 0.002,
+          "End": 0.003,
+          "Percent": 43.80836537706976,
+          "Count": 16659
+        },
+        {
+          "Start": 0.003,
+          "End": 0.004,
+          "Percent": 89.84540532056816,
+          "Count": 23466
+        },
+        {
+          "Start": 0.004,
+          "End": 0.005,
+          "Percent": 96.55889507965158,
+          "Count": 3422
+        },
+        {
+          "Start": 0.005,
+          "End": 0.006,
+          "Percent": 98.74833241779801,
+          "Count": 1116
+        },
+        {
+          "Start": 0.006,
+          "End": 0.007,
+          "Percent": 99.97645766303069,
+          "Count": 626
+        },
+        {
+          "Start": 0.007,
+          "End": 0.008,
+          "Percent": 99.99803813858588,
+          "Count": 11
+        },
+        {
+          "Start": 0.04,
+          "End": 0.044390706,
+          "Percent": 100,
+          "Count": 1
+        }
+      ],
+      "Percentiles": [
+        {
+          "Percentile": 50,
+          "Value": 0.003134492457172079
+        },
+        {
+          "Percentile": 75,
+          "Value": 0.003677533452654905
+        },
+        {
+          "Percentile": 90,
+          "Value": 0.0040230274693161885
+        },
+        {
+          "Percentile": 99,
+          "Value": 0.006204920127795524
+        },
+        {
+          "Percentile": 99.9,
+          "Value": 0.006937744408945689
+        }
+      ]
+    },
+    "Exactly": 0,
+    "Jitter": false,
+    "RetCodes": {
+      "SERVING": 50972
+    },
+    "Destination": "http://proxy:4143",
+    "Streams": 4,
+    "Ping": false
+  }
+]
