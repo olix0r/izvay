@@ -1586,7 +1586,7 @@
   resolved "https://registry.yarnpkg.com/@types/color-name/-/color-name-1.1.1.tgz#1c1261bbeaa10a8055bbc5d8ab84b7b2afc846a0"
   integrity sha512-rr+OQyAjxze7GgWrSaJwydHStIhHq2lvY3BOC2Mj7KnzI7XK0Uw1TOOdI9lDoajEbSWLiYgoo4f1R51erQfhPQ==
 
-"@types/d3-array@*":
+"@types/d3-array@*", "@types/d3-array@^2.0.0":
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/@types/d3-array/-/d3-array-2.0.0.tgz#a0d63a296a2d8435a9ec59393dcac746c6174a96"
   integrity sha512-rGqfPVowNDTszSFvwoZIXvrPG7s/qKzm9piCRIH6xwTTRu7pPZ3ootULFnPkTt74B6i5lN0FpLQL24qGOw1uZA==
@@ -4736,7 +4736,7 @@ eslint-visitor-keys@^1.0.0, eslint-visitor-keys@^1.1.0:
   resolved "https://registry.yarnpkg.com/eslint-visitor-keys/-/eslint-visitor-keys-1.1.0.tgz#e2a82cea84ff246ad6fb57f9bde5b46621459ec2"
   integrity sha512-8y9YjtM1JBJU/A9Kc+SbaOV4y29sSWckBwMHa+FGtVj5gN/sbnKDf6xJUl+8g7FAij9LVaP8C24DUiH/f/2Z9A==
 
-eslint@^6.6.0:
+eslint@^6.6.0, eslint@^6.8.0:
   version "6.8.0"
   resolved "https://registry.yarnpkg.com/eslint/-/eslint-6.8.0.tgz#62262d6729739f9275723824302fb227c8c93ffb"
   integrity sha512-K+Iayyo2LtyYhDSYwz5D5QdWw0hCacNzyq1Y821Xna2xSJj7cijoLLYmLxTQgcgZ9mC61nryMy9S7GRbYpI5Ig==
