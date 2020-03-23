@@ -11,11 +11,11 @@ export interface DurationHistogram {
     Sum: number;
     Avg: number;
     StdDev: number;
-    Data: Array<DurationHistogramData>;
+    Data: Array<DurationHistogramBucket>;
     Percentiles: Array<Percentile>;
 };
 
-export interface DurationHistogramData {
+export interface DurationHistogramBucket {
     Start: number;
     End: number;
     Percent: number;

@@ -22,11 +22,12 @@ enum Direction {
   Out = "out",
 }
 
-interface Report extends Fortio.Report {
+interface Report {
   protocol: Protocol;
   rate: number;
   direction: Direction;
-  build?: string;
+  build: string;
+  fortio: Fortio.Report;
 }
 
 interface LabelReport {
@@ -42,12 +43,9 @@ async function getReports(): Promise<Reports> {
 const SvgStyled = styled.svg`
   height: 100%;
   width: 100%;
-  color: #0f0;
-  background-color: #121212;
-  padding: 20px;
 `;
 
-const rowHeight = 20;
+const rowHeight = 17;
 
 const LatencyHeatmap: FunctionComponent<{ reports: Reports, labeler: LabelReport }> =
   ({ reports, labeler }) => {
@@ -58,20 +56,20 @@ const LatencyHeatmap: FunctionComponent<{ reports: Reports, labeler: LabelReport
       }
 
       const { width } = element.getBoundingClientRect();
-      const height = (rowHeight + 2) * reports.length;
+      const height = rowHeight * reports.length;
 
-      const maxLatency = d3.max(reports, r =>
-        d3.max(r.DurationHistogram.Data, d => d.End)
+      const maxLatency = d3.max(reports, ({ fortio }) =>
+        d3.max(fortio.DurationHistogram.Data, d => d.End)
       );
       const x = d3
         .scaleLinear()
         .domain([0, maxLatency!])
-        .rangeRound([200, width]);
+        .rangeRound([60, width]);
 
       const y = d3
         .scaleBand()
         .domain(reports.map(labeler))
-        .rangeRound([rowHeight, height - rowHeight]);
+        .rangeRound([0, height]);
 
       // reports.forEach(r => {
       //   r.DurationHistogram.Data.forEach(d => {
@@ -86,11 +84,11 @@ const LatencyHeatmap: FunctionComponent<{ reports: Reports, labeler: LabelReport
         .attr("preserveAspectRatio", "xMinYMin meet")
         .attr("viewBox", `0 0 ${width} ${height}`);
 
-      const maxCount = d3.max(reports, r =>
-        d3.max(r.DurationHistogram.Data, d => d.Count)
+      const maxCount = d3.max(reports, ({fortio }) =>
+        d3.max(fortio.DurationHistogram.Data, d => d.Count)
       );
       const boxColor = d3
-        .scaleSequential(d3.interpolateCool)
+        .scaleSequential(d3.interpolateYlOrRd)
         .domain([0, Math.pow(maxCount!, 0.5)]);
       const barColor = d3
         .scaleOrdinal(d3.schemeYlOrRd[5])
@@ -98,7 +96,7 @@ const LatencyHeatmap: FunctionComponent<{ reports: Reports, labeler: LabelReport
 
       svg.append("g").call(g =>
         g
-          .attr("transform", `translate(0,0)`)
+          .attr("transform", `translate(0,${rowHeight})`)
           .call(
             d3
               .axisTop(x)
@@ -110,13 +108,14 @@ const LatencyHeatmap: FunctionComponent<{ reports: Reports, labeler: LabelReport
 
       svg.append("g").call(g =>
         g
-          .attr("transform", `translate(0,0)`)
+          .attr("transform", `translate(60,${rowHeight})`)
           .call(d3.axisLeft(y).tickSizeOuter(0))
-          .call(g => g.selectAll(".domain").remove())
+        //.call(g => g.selectAll(".domain").remove())
       );
 
       const row = svg
         .append("g")
+        .attr("transform", r => `translate(0,${rowHeight})`)
         .selectAll("g")
         .data(reports)
         .join("g")
@@ -125,7 +124,7 @@ const LatencyHeatmap: FunctionComponent<{ reports: Reports, labeler: LabelReport
       row
         .append("g")
         .selectAll("rect")
-        .data(report => report.DurationHistogram.Data)
+        .data(({ fortio }) => fortio.DurationHistogram.Data)
         .join("rect")
         .attr("x", d => x(d.Start) + 1)
         .attr("width", d => x(d.End) - x(d.Start) - 1)
@@ -137,7 +136,7 @@ const LatencyHeatmap: FunctionComponent<{ reports: Reports, labeler: LabelReport
       row
         .append("g")
         .selectAll("rect")
-        .data(r => r.DurationHistogram.Percentiles)
+        .data(({ fortio }) => fortio.DurationHistogram.Percentiles)
         .join("rect")
         .attr("x", p => x(p.Value))
         .attr("width", 3)
@@ -167,20 +166,36 @@ const App: FunctionComponent = () => {
       <CssBaseline />
       <Container maxWidth='xl'>
         <GridList cols={2}>
-          {Array.from(group(reports, r => r.protocol).values()).flatMap(reports => {
-            return Array.from(group(reports, r => r.direction).values()).flatMap(reports => {
-              return Array.from(group(reports, r => r.rate).values()).map(reports => {
-                return (
-                  <GridListTile cols={1} key={`${reports[0].protocol}-${reports[0].direction}-${reports[0].rate}`}>
-                    <GridListTileBar title={`${reports[0].protocol} ${reports[0].direction} ${reports[0].rate}rps`} />
-                    <LatencyHeatmap
-                      reports={reports}
-                      labeler={({ build }) => build ? `${build}` : 'latest'}
-                    />
-                  </GridListTile>
-                );
-              });
+          {Array.from(group(reports, r => r.build).values()).flatMap(byBuild => {
+            const reports = byBuild.sort((a, b) => {
+              if (a.direction === b.direction) {
+                if (a.protocol === b.protocol) {
+                  return a.rate - b.rate;
+                }
+
+                if (a.protocol < b.protocol) {
+                  return -1;
+                }
+
+                return 1;
+              }
+              
+              if (a.direction < b.direction) {
+                return -1;
+              }
+              
+              return 1;
             });
+            let build = reports[0].build || 'latest';
+            return (
+              <GridListTile cols={1} key={`${build}`}>
+                <GridListTileBar title={`${build}`} />
+                <LatencyHeatmap
+                  reports={reports}
+                  labeler={({ direction, protocol, rate }) => `${direction} ${protocol} ${rate / 1000}K`}
+                />
+              </GridListTile>
+            );
           })}
         </GridList>
       </Container>
