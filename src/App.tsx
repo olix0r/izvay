@@ -2,7 +2,7 @@ import * as d3 from "d3";
 import { group } from "d3-array"
 import React, { FunctionComponent, useCallback, useEffect, useState } from "react";
 import styled from "@emotion/styled";
-import { AppBar, Box, CssBaseline, Container, Grid, Paper, Toolbar, Typography } from "@material-ui/core";
+import { Box, CssBaseline, Container, Grid, Paper, Typography } from "@material-ui/core";
 
 import * as Fortio from "./fortio";
 
@@ -28,8 +28,9 @@ type LabelReport = (r: Report) => string;
 
 type Reports = Array<Report>;
 
-async function getReports(): Promise<Reports> {
-  return await (await fetch("/reports.json")).json();
+const getReports = async () => {
+  const rsp = await fetch("/reports.json");
+  return await rsp.json();
 }
 
 const SvgStyled = styled.svg`
@@ -43,7 +44,6 @@ type Props = { reports: Reports, labeler: LabelReport };
 
 const LatencyHeatmap: FunctionComponent<Props> = ({ reports, labeler }) => {
     let drawReports = (element: SVGSVGElement) => {
-      console.log("Drawing reports", element, reports);
       if (reports.length === 0) {
         return;
       }
@@ -64,12 +64,6 @@ const LatencyHeatmap: FunctionComponent<Props> = ({ reports, labeler }) => {
         .domain(reports.map(labeler))
         .rangeRound([0, height]);
 
-      // reports.forEach(r => {
-      //   r.DurationHistogram.Data.forEach(d => {
-      //     console.log(r.protocol, r.direction, r.rate, d, x(d.Start), x(d.End));
-      //   });
-      // });
-
       const svg = d3
         .select(element)
         //.attr('width', width)
@@ -81,7 +75,7 @@ const LatencyHeatmap: FunctionComponent<Props> = ({ reports, labeler }) => {
         d3.max(fortio.DurationHistogram.Data, d => d.Count)
       );
       const boxColor = d3
-        .scaleSequential(d3.interpolateBuGn)
+        .scaleSequential(d3.interpolateYlGnBu)
         .domain([0, Math.pow(maxCount!, 0.5)]);
       const barColor = d3
         .scaleOrdinal(d3.schemeYlOrRd[5])
@@ -140,7 +134,6 @@ const LatencyHeatmap: FunctionComponent<Props> = ({ reports, labeler }) => {
         .text(p => `${p.Percentile} percentile ${p.Value}ms`);
     };
 
-    console.log("Returning svg");
     return <SvgStyled ref={useCallback(drawReports, [reports])} />;
   };
 
@@ -159,7 +152,6 @@ const LatencyBars: FunctionComponent<Props> = ({ reports, labeler }) => {
         let buckets = [];
         let prior = 0;
         for (let bucket of fortio.DurationHistogram.Data) {
-          console.log("bucket", prior, bucket);
           buckets.push({ prior, bucket });
           prior += bucket.Count;
         }
@@ -180,12 +172,6 @@ const LatencyBars: FunctionComponent<Props> = ({ reports, labeler }) => {
         .domain(reports.map(labeler))
         .rangeRound([0, height]);
 
-      // reports.forEach(r => {
-      //   r.DurationHistogram.Data.forEach(d => {
-      //     console.log(r.protocol, r.direction, r.rate, d, x(d.Start), x(d.End));
-      //   });
-      // });
-
       const svg = d3
         .select(element)
         //.attr('width', width)
@@ -195,11 +181,8 @@ const LatencyBars: FunctionComponent<Props> = ({ reports, labeler }) => {
 
       const maxLatency = d3.max(reports, ({ fortio }) => fortio.DurationHistogram.Max);
       const boxColor = d3
-        .scaleSequential(d3.interpolateBuGn)
+        .scaleSequential(d3.interpolateYlGnBu)
         .domain([0, Math.pow(maxLatency!, 0.5)]);
-      const barColor = d3
-        .scaleOrdinal(d3.schemeYlOrRd[5])
-        .domain(["50", "75", "90", "99", "99.9"]);
 
       svg.append("g").call(g =>
         g
@@ -233,34 +216,14 @@ const LatencyBars: FunctionComponent<Props> = ({ reports, labeler }) => {
         .selectAll("rect")
         .data(report => toBuckets(report))
         .join("rect")
-        .attr("x", ({ prior }) => x(prior) + 2)
-        .attr("width", ({ prior, bucket }) => x(prior + bucket.Count) - x(prior))
+        .attr("x", ({ prior }) => x(prior) + 1)
+        .attr("width", ({ prior, bucket }) => Math.max(3, x(prior + bucket.Count) - x(prior) - 2))
         .attr("height", y.bandwidth() - 1)
         .attr("fill", ({ bucket }) => boxColor(Math.pow(bucket.End, 0.5)))
         .append("title")
         .text(({ bucket }) => `${bucket.Count} reqs [${bucket.Start * 1000}ms..${bucket.End * 1000}ms)`);
-
-      row
-        .append("g")
-        .selectAll("rect")
-        .data(({ fortio }) => fortio.DurationHistogram.Percentiles.map(({ Percentile, Value }) => {
-          return {
-            Count: (Percentile / 100.0) * fortio.DurationHistogram.Count,
-            Percentile,
-            Value,
-          };
-        }))
-        .join("rect")
-        .attr("x", ({ Count }) => x(Count))
-        .attr("y", y.bandwidth() / 3)
-        .attr("width", 3)
-        .attr("height", (y.bandwidth() / 3))
-        .attr("fill", ({ Percentile }) => barColor(`${Percentile}`))
-        .append("title")
-        .text(p => `${p.Percentile} percentile ${p.Value * 1000}ms`);
     };
 
-    console.log("Returning svg");
     return <SvgStyled ref={useCallback(drawReports, [reports])} />;
   };
 
@@ -288,9 +251,7 @@ const App: FunctionComponent = () => {
   const [reports, setReports] = useState<Reports>([]);
 
   useEffect(() => {
-    console.log("Getting reports");
     getReports().then(rs => {
-      console.log("Setting reports", rs);
       setReports(rs);
     });
   }, []);
@@ -299,39 +260,84 @@ const App: FunctionComponent = () => {
     <React.Fragment>
       <CssBaseline />
       <Container maxWidth='xl'>
-        <Grid spacing={1}>
-          <Grid item container spacing={1}>
-            <Grid item container sm={12} lg={6} spacing={3} key='heat'>
-              <Grid item><Typography>By latency</Typography></Grid>
+        <Grid container>
+          <Grid item container spacing={5}>
+            <Grid item container sm={12} lg={6} spacing={2} key='heat'>
+              <Grid item>
+                <Container>
+                  <Typography variant='h6'>By latency</Typography>
+                </Container>
+              </Grid>
               {Array.from(group(reports, r => r.build).values()).flatMap(byBuild => {
                 const reports = byBuild.sort(compareReportWithinBuild);
                 return (
-                    <Grid item sm={12} key={`${reports[0].build}-heat`}>
-                      <Paper>
-                        <Box height={`${60 + rowHeight * reports.length}px`} p='10px'>
-                          <LatencyHeatmap
-                            reports={reports}
-                            labeler={({ direction, protocol, rate }) => `${direction} ${protocol} ${rate / 1000}K`}
-                          />
-                        </Box>
-                      </Paper>
-                    </Grid>
-                  );
+                  <Grid item sm={12} key={`${reports[0].build}-heat`}>
+                    <Paper>
+                      <Grid
+                        container
+                        item
+                        sm={12}
+                        spacing={3}
+                        justify='flex-start'
+                        alignItems='center'
+                      >
+                        <Grid item sm={1}>
+                          <Container>
+                            <Typography variant='caption'>{reports[0].build}</Typography>
+                          </Container>
+                        </Grid>
+                        <Grid item sm={11}>
+                          <Paper elevation={2}>
+                            <Box height={`${rowHeight * (reports.length + 2)}px`} p='10px'>
+                              <LatencyHeatmap
+                                  reports={reports}
+                                  labeler={({ direction, protocol, rate }) => `${direction} ${protocol} ${rate / 1000}K`}
+                                />
+                            </Box>
+                          </Paper>
+                        </Grid>
+                      </Grid>
+                    </Paper>
+                  </Grid>
+                );
               })}
             </Grid>
-            <Grid item container sm={12} lg={6} spacing={3} key='bars'>
-              <Grid item><Typography>By requests</Typography></Grid>
+            <Grid item container sm={12} lg={6} spacing={2} key='bars'>
+              <Grid item>
+                <Container>
+                  <Typography variant='h6'>By requests</Typography>
+                </Container>
+              </Grid>
               {Array.from(group(reports, r => r.build).values()).flatMap(byBuild => {
                 const reports = byBuild.sort(compareReportWithinBuild);
+                const build = reports[0].build;
                 return (
-                  <Grid item sm={12} key={`${reports[0].build}-bars`}>
+                  <Grid item sm={12} key={`${build}-bars`}>
                     <Paper>
-                      <Box height={`${60 + rowHeight * reports.length}px`} p='10px'>
-                        <LatencyBars
-                          reports={reports}
-                          labeler={({ direction, protocol, rate }) => `${direction} ${protocol} ${rate / 1000}K`}
-                        />
-                      </Box>
+                      <Grid
+                        container
+                        item
+                        sm={12}
+                        spacing={3}
+                        justify='flex-start'
+                        alignItems='center'
+                      >
+                        <Grid item sm={1}>
+                          <Container>
+                            <Typography variant='caption'>{build}</Typography>
+                          </Container>
+                        </Grid>
+                        <Grid item sm={11}>
+                          <Paper>
+                            <Box height={`${rowHeight * (reports.length + 2)}px`} p='10px'>
+                              <LatencyBars
+                                  reports={reports}
+                                  labeler={({ direction, protocol, rate }) => `${direction} ${protocol} ${rate / 1000}K`}
+                                />
+                            </Box>
+                          </Paper>
+                        </Grid>
+                      </Grid>
                     </Paper>
                   </Grid>
                 );
