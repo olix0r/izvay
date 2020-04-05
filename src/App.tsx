@@ -75,7 +75,7 @@ const LatencyHeatmap: FunctionComponent<Props> = ({ reports, labeler }) => {
         d3.max(fortio.DurationHistogram.Data, d => d.Count)
       );
       const boxColor = d3
-        .scaleSequential(d3.interpolateYlGnBu)
+        .scaleSequential(d3.interpolateYlOrRd)
         .domain([0, Math.pow(maxCount!, 0.5)]);
       const barColor = d3
         .scaleOrdinal(d3.schemeYlOrRd[5])
@@ -303,6 +303,7 @@ const App: FunctionComponent = () => {
               })}
             </Grid>
             <Grid item container sm={12} lg={6} spacing={2} key='bars'>
+
               <Grid item>
                 <Container>
                   <Typography variant='h6'>By requests</Typography>
