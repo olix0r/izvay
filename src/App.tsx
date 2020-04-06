@@ -2,7 +2,7 @@ import * as d3 from "d3";
 import { group } from "d3-array"
 import React, { FunctionComponent, useCallback, useEffect, useState } from "react";
 import styled from "@emotion/styled";
-import { Box, CssBaseline, Container, Grid, Paper, Typography } from "@material-ui/core";
+import { CssBaseline, Container, Grid, Paper, Typography } from "@material-ui/core";
 
 import * as Fortio from "./fortio";
 
@@ -50,7 +50,6 @@ type Props = {
 };
 
 const LatencyHeatmap: FunctionComponent<Props> = ({ reports, labeler, maxLatency, maxRequests, withTopAxis }) => {
-    console.log("heatmap", reports);
     let drawReports = (element: SVGSVGElement) => {
       if (reports.length === 0) {
         return;
@@ -71,10 +70,8 @@ const LatencyHeatmap: FunctionComponent<Props> = ({ reports, labeler, maxLatency
 
       const svg = d3
         .select(element)
-        .attr('width', width)
-        .attr('height', height + rowHeight)
         .attr("preserveAspectRatio", "xMinYMin meet")
-        .attr("viewBox", `0 0 ${width} ${height + rowHeight}`);
+        .attr("viewBox", `0 0 ${width} ${height + (withTopAxis ? rowHeight : 0)}`);
 
       const boxColor = d3
         .scaleSequential(d3.interpolateYlOrRd)
@@ -259,15 +256,18 @@ const App: FunctionComponent = () => {
 
   useEffect(() => {
     getReports().then((reports: Reports) => {
-      const maxLatency = d3.max(reports.baseline.concat(reports.proxy), ({ fortio }) =>
-        d3.max(fortio.DurationHistogram.Data, d => d.End)
+      const maxLatency = d3.max(
+        reports.baseline.concat(reports.proxy),
+        ({ run, kind, name, fortio }) => {
+          return fortio.DurationHistogram.Max;
+        }
       )!;
-      const maxRequests = d3.max(reports.baseline.concat(reports.proxy), ({ fortio }) =>
-        d3.max(fortio.DurationHistogram.Data, d => d.Count)
+      const maxRequests = d3.max(
+        reports.baseline.concat(reports.proxy),
+        ({ fortio }) =>  fortio.DurationHistogram.Count,
       )!;
 
       const s = { maxLatency, maxRequests, reports };
-      console.log(s);
       setState(s);
     });
   }, []);
@@ -277,24 +277,23 @@ const App: FunctionComponent = () => {
     <React.Fragment>
       <CssBaseline />
       <Container maxWidth='xl'>
-        <Grid container spacing={5}>
-          <Grid item sm={12} lg={6} key='heat'>
-            <Container>
-              <Paper elevation={2}>
-                <Grid container spacing={3} direction='row'>
-                  <Grid container item sm={12} key={`heat-axis`} alignItems='center'>
-                    <Grid item sm={1}>
-                      <Container>
-                        <Typography>Latency</Typography>
-                      </Container>
-                    </Grid>
-                     <Grid item sm={1}>
-                      <Container>
-                        <Typography variant='caption'>baseline</Typography>
-                      </Container>
-                    </Grid>
-                    <Grid item sm={10}>
-                      <Box height={`${rowHeight * (5 + state.reports.baseline.length)}`}>
+          <Grid container spacing={5}>
+            <Grid item sm={12} lg={6} key='heat'>
+              <Container>
+                <Paper elevation={2}>
+                  <Grid container spacing={1} direction='row'>
+                    <Grid container item sm={12} key={`heat-axis`} alignItems='flex-start'>
+                      <Grid item sm={1}>
+                        <Container>
+                          <Typography>Latency</Typography>
+                        </Container>
+                      </Grid>
+                      <Grid item sm={1}>
+                        <Container>
+                          <Typography variant='caption'>baseline</Typography>
+                        </Container>
+                      </Grid>
+                      <Grid item sm={10}>
                         <LatencyHeatmap
                             reports={state.reports.baseline}
                             labeler={({ name }) => `${name}`}
@@ -302,22 +301,20 @@ const App: FunctionComponent = () => {
                             maxRequests={state.maxRequests}
                             withTopAxis
                           />
-                      </Box>
+                      </Grid>
                     </Grid>
-                  </Grid>
-                  {Array.from(group(state.reports.proxy, r => r.run).values()).flatMap(byRun => {
-                    const reports = byRun.sort(compareReportWithinRun);
-                    const run = reports[0].run;
-                    return (
-                      <Grid item sm={12} key={`${run}-heat`}>
-                        <Box height={`${rowHeight * (1 + reports.length)}`}>
+                    {Array.from(group(state.reports.proxy, r => r.run).values()).flatMap(byRun => {
+                      const reports = byRun.sort(compareReportWithinRun);
+                      const run = reports[0].run;
+                      return (
+                        <Grid item sm={12} key={`${run}-heat`}>
                           <Grid
                             container
                             item
                             sm={12}
                             spacing={1}
                             justify='flex-start'
-                            alignItems='center'
+                            alignItems='flex-start'
                           >
                             <Grid item sm={1}>
                             </Grid>
@@ -327,72 +324,69 @@ const App: FunctionComponent = () => {
                               </Container>
                             </Grid>
                             <Grid item sm={10}>
-                                <LatencyHeatmap
-                                    reports={reports}
-                                    labeler={({ name }) => `${name}`}
-                                    maxLatency={state.maxLatency}
-                                    maxRequests={state.maxRequests}
-                                  />
+                              <LatencyHeatmap
+                                  reports={reports}
+                                  labeler={({ name }) => `${name}`}
+                                  maxLatency={state.maxLatency}
+                                  maxRequests={state.maxRequests}
+                                />
                             </Grid>
                           </Grid>
-                        </Box>
-                      </Grid>
-                    );
-                  })}
-                </Grid>
-              </Paper>
-            </Container>
-          </Grid>
-          <Grid item sm={12} lg={6} key='bars'>
-            <Container>
-              <Paper elevation={2}>
-                <Grid container spacing={3} direction='row'>
-                  <Grid item container sm={12} key={`heat-axis`}>
-                    <Grid item sm={3}>
-                      <Container>
-                        <Typography>Requests</Typography>
-                      </Container>
-                    </Grid>
+                        </Grid>
+                      );
+                    })}
                   </Grid>
-                  {Array.from(group(state.reports.proxy, r => r.run).values()).flatMap(byRun => {
-                    const reports = byRun.sort(compareReportWithinRun);
-                    const run = reports[0].run;
-                    return (
-                      <Grid item sm={12} key={`${run}-bars`}>
+                </Paper>
+              </Container>
+            </Grid>
+            <Grid item sm={12} lg={6} key='bars'>
+              <Container>
+                <Paper elevation={2}>
+                  <Grid container spacing={3} direction='row'>
+                    <Grid item container sm={12} key={`heat-axis`}>
+                      <Grid item sm={3}>
                         <Container>
-                          <Grid
-                            container
-                            item
-                            sm={12}
-                            spacing={3}
-                            justify='flex-start'
-                            alignItems='center'
-                          >
-                            <Grid item sm={2}>
-                              <Container>
-                                <Typography variant='caption'>{run}</Typography>
-                              </Container>
-                            </Grid>
-                            <Grid item sm={10}>
-                              <Box height={`${rowHeight * (reports.length)}px`}>
+                          <Typography>Requests</Typography>
+                        </Container>
+                      </Grid>
+                    </Grid>
+                    {Array.from(group(state.reports.proxy, r => r.run).values()).flatMap(byRun => {
+                      const reports = byRun.sort(compareReportWithinRun);
+                      const run = reports[0].run;
+                      return (
+                        <Grid item sm={12} key={`${run}-bars`}>
+                          <Container>
+                            <Grid
+                              container
+                              item
+                              sm={12}
+                              spacing={3}
+                              justify='flex-start'
+                              alignItems='center'
+                            >
+                              <Grid item sm={2}>
+                                <Container>
+                                  <Typography variant='caption'>{run}</Typography>
+                                </Container>
+                              </Grid>
+                              <Grid item sm={10}>
                                 <LatencyBars
                                     reports={reports}
                                     labeler={({ name }) => `${name}`}
                                     maxLatency={state.maxLatency}
                                     maxRequests={state.maxRequests}
                                   />
-                              </Box>
+                              </Grid>
                             </Grid>
-                          </Grid>
-                        </Container>
-                      </Grid>
-                    );
-                  })}
-                </Grid>
-              </Paper>
-            </Container>
+                          </Container>
+                        </Grid>
+                      );
+                    })}
+                  </Grid>
+                </Paper>
+              </Container>
+            </Grid>
           </Grid>
-        </Grid>
       </Container>
     </React.Fragment>
   );
