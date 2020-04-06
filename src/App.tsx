@@ -11,28 +11,33 @@ type Kind = "baseline" | "proxy";
 interface Report {
   run: string;
   kind: Kind;
-  test: string;
+  name: string;
   fortio: Fortio.Report;
 }
 
 type LabelReport = (r: Report) => string;
 
-type Reports = Array<Report>;
+interface Reports {
+  baseline: Report[];
+  proxy: Report[];
+}
 
 const getReports = async () => {
   const rsp = await fetch("/reports.json");
-  const reports = await rsp.json();
-  return reports.map((fortio: Fortio.Report) => {
-    console.log(fortio.Labels);
-    let labels = JSON.parse(fortio.Labels);
-    let run = labels["run"];
+  return (await rsp.json()).reduce(
+    (accum: Reports, fortio: Fortio.Report) => {
+      let labels = JSON.parse(fortio.Labels);
+      let run = labels["run"];
 
-    if (labels["baseline"]) {
-      return { kind: "baseline", test: labels["baseline"], run, fortio };
-    }
+      if (labels["baseline"]) {
+        accum["baseline"].push({ kind: "baseline", name: labels["baseline"], run, fortio });
+      } else {
+        accum["proxy"].push({ kind: "proxy", name: labels["proxy"], run, fortio });
+      }
 
-    return { kind: "proxy", test: labels["proxy"], run, fortio };
-  });
+      return accum;
+    },
+    { proxy: [], baseline: [] });
 }
 
 const SvgStyled = styled.svg`
@@ -43,7 +48,7 @@ const SvgStyled = styled.svg`
 const rowHeight = 17;
 
 type Props = {
-  reports: Reports,
+  reports: Report[],
   labeler: LabelReport,
   maxLatency: number,
   maxRequests: number,
@@ -236,28 +241,28 @@ const compareReportWithinRun = (a: Report, b: Report) => {
     return 1;
   }
 
-  if (a.test === b.test) {
+  if (a.name === b.name) {
     return 0;
   }
 
-  if (a.test === 'baseline' || a.test < b.test) {
+  if (a.name === 'baseline' || a.name < b.name) {
     return -1;
   }
 
-  // b.test === 'baseline' || a.test > b.test
+  // b.name === 'baseline' || a.name > b.name
   return 1;
 };
 
 const App: FunctionComponent = () => {
   type State = { maxLatency: number, maxRequests: number, reports: Reports };
-  const [state, setState] = useState<State>({ maxLatency: 0, maxRequests: 0, reports: [] });
+  const [state, setState] = useState<State>({ maxLatency: 0, maxRequests: 0, reports: {baseline: [], proxy: []} });
 
   useEffect(() => {
     getReports().then((reports: Reports) => {
-      const maxLatency = d3.max(reports, ({ fortio }) =>
+      const maxLatency = d3.max(reports.baseline.concat(reports.proxy), ({ fortio }) =>
         d3.max(fortio.DurationHistogram.Data, d => d.End)
       )!;
-      const maxRequests = d3.max(reports, ({ fortio }) =>
+      const maxRequests = d3.max(reports.baseline.concat(reports.proxy), ({ fortio }) =>
         d3.max(fortio.DurationHistogram.Data, d => d.Count)
       )!;
 
@@ -272,81 +277,101 @@ const App: FunctionComponent = () => {
       <Container maxWidth='xl'>
         <Grid container>
           <Grid item container spacing={5}>
-            <Grid item container sm={12} lg={6} spacing={2} key='heat'>
-              {Array.from(group(state.reports, r => r.run).values()).flatMap(byRun => {
-                const reports = byRun.sort(compareReportWithinRun);
-                const run = reports[0].run;
-                return (
-                  <Grid item sm={12} key={`${run}-heat`}>
-                    <Paper>
-                      <Grid
-                        container
-                        item
-                        sm={12}
-                        spacing={3}
-                        justify='flex-start'
-                        alignItems='center'
-                      >
-                        <Grid item sm={1}>
-                          <Container>
-                            <Typography variant='caption'>{run}</Typography>
-                          </Container>
-                        </Grid>
-                        <Grid item sm={11}>
-                          <Paper elevation={2}>
-                            <Box height={`${rowHeight * (reports.length + 2)}px`} p='10px'>
-                              <LatencyHeatmap
-                                  reports={reports}
-                                  labeler={({ kind, test }) => `${kind} ${test}`}
-                                  maxLatency={state.maxLatency}
-                                  maxRequests={state.maxRequests}
-                                />
-                            </Box>
-                          </Paper>
-                        </Grid>
-                      </Grid>
-                    </Paper>
+            <Grid item sm={12} lg={6} key='heat'>
+              <Container>
+              <Paper elevation={2}>
+                <Grid container sm={12} lg={6} spacing={3} direction='row'>
+                  <Grid item container sm={12} key={`heat-axis`}>
+                    <Grid item sm={3}>
+                      <Container>
+                        <Typography variant='caption'>Latency</Typography>
+                      </Container>
+                    </Grid>
                   </Grid>
-                );
-              })}
+                  {Array.from(group(state.reports.proxy, r => r.run).values()).flatMap(byRun => {
+                    const reports = byRun.sort(compareReportWithinRun);
+                    const run = reports[0].run;
+                    return (
+                      <Grid item sm={12} key={`${run}-heat`}>
+                          <Grid
+                            container
+                            item
+                            sm={12}
+                            spacing={1}
+                            justify='flex-start'
+                            alignItems='center'
+                          >
+                            <Grid item sm={2}>
+                              <Container>
+                                <Typography variant='caption'>{run}</Typography>
+                              </Container>
+                            </Grid>
+                            <Grid item sm={10}>
+                              <Box height={`${rowHeight * (2 + reports.length)}`}>
+                                <LatencyHeatmap
+                                    reports={reports}
+                                    labeler={({ name }) => `${name}`}
+                                    maxLatency={state.maxLatency}
+                                    maxRequests={state.maxRequests}
+                                  />
+                              </Box>
+                            </Grid>
+                          </Grid>
+                      </Grid>
+                    );
+                  })}
+                </Grid>
+                </Paper>
+              </Container>
             </Grid>
-            <Grid item container sm={12} lg={6} spacing={2} key='bars'>
-              {Array.from(group(state.reports, r => r.run).values()).flatMap(byRun => {
-                const reports = byRun.sort(compareReportWithinRun);
-                const run = reports[0].run;
-                return (
-                  <Grid item sm={12} key={`${run}-bars`}>
-                    <Paper>
-                      <Grid
-                        container
-                        item
-                        sm={12}
-                        spacing={3}
-                        justify='flex-start'
-                        alignItems='center'
-                      >
-                        <Grid item sm={1}>
-                          <Container>
-                            <Typography variant='caption'>{run}</Typography>
-                          </Container>
-                        </Grid>
-                        <Grid item sm={11}>
-                          <Paper>
-                            <Box height={`${rowHeight * (reports.length + 2)}px`} p='10px'>
-                              <LatencyBars
-                                  reports={reports}
-                                  labeler={({ kind, test }) => `${kind} ${test}`}
-                                  maxLatency={state.maxLatency}
-                                  maxRequests={state.maxRequests}
-                                />
-                            </Box>
-                          </Paper>
-                        </Grid>
-                      </Grid>
-                    </Paper>
+            <Grid item sm={12} lg={6} spacing={2} key='bars'>
+              <Paper>
+                <React.Fragment>
+                  <Grid item container sm={12} key={`bars-axis`}>
+                    <Grid item sm={3} key={`bars-axis`}>
+                      <Container>
+                        <Typography variant='caption'>Requests</Typography>
+                      </Container>
+                    </Grid>
                   </Grid>
-                );
-              })}
+                  {Array.from(group(state.reports.proxy, r => r.run).values()).flatMap(byRun => {
+                    const reports = byRun.sort(compareReportWithinRun);
+                    const run = reports[0].run;
+                    return (
+                      <Grid item sm={12} key={`${run}-bars`}>
+                        <Paper>
+                          <Grid
+                            container
+                            item
+                            sm={12}
+                            spacing={3}
+                            justify='flex-start'
+                            alignItems='center'
+                          >
+                            <Grid item sm={2}>
+                              <Container>
+                                <Typography variant='caption'>{run}</Typography>
+                              </Container>
+                            </Grid>
+                            <Grid item sm={10}>
+                              <Paper>
+                                <Box height={`${rowHeight * (reports.length)}px`}>
+                                  <LatencyBars
+                                      reports={reports}
+                                      labeler={({ name }) => `${name}`}
+                                      maxLatency={state.maxLatency}
+                                      maxRequests={state.maxRequests}
+                                    />
+                                </Box>
+                              </Paper>
+                            </Grid>
+                          </Grid>
+                        </Paper>
+                      </Grid>
+                    );
+                  })}
+                </React.Fragment>
+              </Paper>
             </Grid>
           </Grid>
         </Grid>
