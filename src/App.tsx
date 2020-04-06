@@ -26,15 +26,8 @@ const getReports = async () => {
   const rsp = await fetch("/reports.json");
   const reports = (await rsp.json()).reduce(
     (accum: Reports, fortio: Fortio.Report) => {
-      let labels = JSON.parse(fortio.Labels);
-      let run = labels["run"];
-
-      if (labels["baseline"]) {
-        accum["baseline"].push({ kind: "baseline", name: labels["baseline"], run, fortio });
-      } else {
-        accum["proxy"].push({ kind: "proxy", name: labels["proxy"], run, fortio });
-      }
-
+      let { run, kind, name } = JSON.parse(fortio.Labels);
+      accum[kind as Kind].push({ kind, name, run, fortio });
       return accum;
     },
     { proxy: [], baseline: [] });
@@ -53,10 +46,10 @@ type Props = {
   labeler: LabelReport,
   maxLatency: number,
   maxRequests: number,
-  withYAxis?: boolean,
+  withTopAxis?: boolean,
 };
 
-const LatencyHeatmap: FunctionComponent<Props> = ({ reports, labeler, maxLatency, maxRequests, withYAxis }) => {
+const LatencyHeatmap: FunctionComponent<Props> = ({ reports, labeler, maxLatency, maxRequests, withTopAxis }) => {
     console.log("heatmap", reports);
     let drawReports = (element: SVGSVGElement) => {
       if (reports.length === 0) {
@@ -78,10 +71,10 @@ const LatencyHeatmap: FunctionComponent<Props> = ({ reports, labeler, maxLatency
 
       const svg = d3
         .select(element)
-        //.attr('width', width)
-        //.attr('height', margin.top + margin.bottom + reports.length * rowHeight);
+        .attr('width', width)
+        .attr('height', height + rowHeight)
         .attr("preserveAspectRatio", "xMinYMin meet")
-        .attr("viewBox", `0 0 ${width} ${height}`);
+        .attr("viewBox", `0 0 ${width} ${height + rowHeight}`);
 
       const boxColor = d3
         .scaleSequential(d3.interpolateYlOrRd)
@@ -91,7 +84,7 @@ const LatencyHeatmap: FunctionComponent<Props> = ({ reports, labeler, maxLatency
         .domain(["50", "75", "90", "99", "99.9"]);
 
       let offset = 0;
-      if (withYAxis) {
+      if (withTopAxis) {
         svg.append("g").call(g =>
           g
             .attr("transform", `translate(0,${rowHeight})`)
@@ -289,25 +282,28 @@ const App: FunctionComponent = () => {
             <Container>
               <Paper elevation={2}>
                 <Grid container spacing={3} direction='row'>
-                  <Grid item sm={12} key={`heat-axis`}>
-                    <Box height={`${rowHeight * (3 + state.reports.baseline.length)}`}>
-                      <Grid container>
-                        <Grid item sm={2}>
-                          <Container>
-                            <Typography variant='caption'>Latency</Typography>
-                          </Container>
-                        </Grid>
-                        <Grid item sm={10}>
-                          <LatencyHeatmap
-                              reports={state.reports.baseline}
-                              labeler={({ name }) => `${name}`}
-                              maxLatency={state.maxLatency}
-                              maxRequests={state.maxRequests}
-                              withYAxis
-                            />
-                        </Grid>
-                      </Grid>
-                    </Box>
+                  <Grid container item sm={12} key={`heat-axis`} alignItems='center'>
+                    <Grid item sm={1}>
+                      <Container>
+                        <Typography>Latency</Typography>
+                      </Container>
+                    </Grid>
+                     <Grid item sm={1}>
+                      <Container>
+                        <Typography variant='caption'>baseline</Typography>
+                      </Container>
+                    </Grid>
+                    <Grid item sm={10}>
+                      <Box height={`${rowHeight * (5 + state.reports.baseline.length)}`}>
+                        <LatencyHeatmap
+                            reports={state.reports.baseline}
+                            labeler={({ name }) => `${name}`}
+                            maxLatency={state.maxLatency}
+                            maxRequests={state.maxRequests}
+                            withTopAxis
+                          />
+                      </Box>
+                    </Grid>
                   </Grid>
                   {Array.from(group(state.reports.proxy, r => r.run).values()).flatMap(byRun => {
                     const reports = byRun.sort(compareReportWithinRun);
@@ -323,7 +319,9 @@ const App: FunctionComponent = () => {
                             justify='flex-start'
                             alignItems='center'
                           >
-                            <Grid item sm={2}>
+                            <Grid item sm={1}>
+                            </Grid>
+                            <Grid item sm={1}>
                               <Container>
                                 <Typography variant='caption'>{run}</Typography>
                               </Container>
@@ -352,7 +350,7 @@ const App: FunctionComponent = () => {
                   <Grid item container sm={12} key={`heat-axis`}>
                     <Grid item sm={3}>
                       <Container>
-                        <Typography variant='caption'>Requests</Typography>
+                        <Typography>Requests</Typography>
                       </Container>
                     </Grid>
                   </Grid>
