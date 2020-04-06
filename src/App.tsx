@@ -141,7 +141,7 @@ const LatencyHeatmap: FunctionComponent<Props> = ({ reports, labeler, maxLatency
   };
 
 
-const LatencyBars: FunctionComponent<Props> = ({ reports, labeler, maxLatency, maxRequests }) => {
+const LatencyBars: FunctionComponent<Props> = ({ reports, labeler, maxLatency, maxRequests, withTopAxis }) => {
     let drawReports = (element: SVGSVGElement) => {
       if (reports.length === 0) {
         return;
@@ -179,34 +179,38 @@ const LatencyBars: FunctionComponent<Props> = ({ reports, labeler, maxLatency, m
         //.attr('width', width)
         //.attr('height', margin.top + margin.bottom + reports.length * rowHeight);
         .attr("preserveAspectRatio", "xMinYMin meet")
-        .attr("viewBox", `0 0 ${width} ${height}`);
+        .attr("viewBox", `0 0 ${width} ${height + (withTopAxis ? rowHeight : 0)}`);
 
       const boxColor = d3
         .scaleSequential(d3.interpolateYlGnBu)
         .domain([0, Math.pow(maxLatency!, 0.5)]);
 
-      // svg.append("g").call(g =>
-      //   g
-      //     .attr("transform", `translate(0,${rowHeight})`)
-      //     .call(
-      //       d3
-      //         .axisTop(x)
-      //         .tickSize(width / 1000)
-      //         .tickFormat(n => `${n.valueOf()/ 1000}K`)
-      //     )
-      //     .call(g => g.selectAll(".domain").remove())
-      // );
+      let offset = 0;
+      if (withTopAxis) {
+        svg.append("g").call(g =>
+          g
+            .attr("transform", `translate(0,${rowHeight})`)
+            .call(
+              d3
+                .axisTop(x)
+                .tickSize(rowHeight / 3)
+                .tickFormat(n => `${n.valueOf() / 1000}K`)
+            )
+            .call(g => g.selectAll(".domain").remove())
+        );
+        offset = rowHeight;
+      }
 
       svg.append("g").call(g =>
         g
-          .attr("transform", `translate(60,0)`)
+          .attr("transform", `translate(60,${offset})`)
           .call(d3.axisLeft(y).tickSizeOuter(0))
-        //.call(g => g.selectAll(".domain").remove())
+        .call(g => g.selectAll(".domain").remove())
       );
 
       const row = svg
         .append("g")
-        .attr("transform", r => `translate(0,0)`)
+        .attr("transform", r => `translate(0,${offset})`)
         .selectAll("g")
         .data(reports)
         .join("g")
@@ -281,8 +285,8 @@ const App: FunctionComponent = () => {
             <Grid item sm={12} lg={6} key='heat'>
               <Container>
                 <Paper elevation={2}>
-                  <Grid container spacing={1} direction='row'>
-                    <Grid container item sm={12} key={`heat-axis`} alignItems='flex-start'>
+                  <Grid container spacing={3} direction='row'>
+                    <Grid container item sm={12} key={`heat-axis`} spacing={1} alignItems='flex-start'>
                       <Grid item sm={1}>
                         <Container>
                           <Typography>Latency</Typography>
@@ -307,30 +311,29 @@ const App: FunctionComponent = () => {
                       const reports = byRun.sort(compareReportWithinRun);
                       const run = reports[0].run;
                       return (
-                        <Grid item sm={12} key={`${run}-heat`}>
-                          <Grid
-                            container
-                            item
-                            sm={12}
-                            spacing={1}
-                            justify='flex-start'
-                            alignItems='flex-start'
-                          >
-                            <Grid item sm={1}>
-                            </Grid>
-                            <Grid item sm={1}>
-                              <Container>
-                                <Typography variant='caption'>{run}</Typography>
-                              </Container>
-                            </Grid>
-                            <Grid item sm={10}>
-                              <LatencyHeatmap
-                                  reports={reports}
-                                  labeler={({ name }) => `${name}`}
-                                  maxLatency={state.maxLatency}
-                                  maxRequests={state.maxRequests}
-                                />
-                            </Grid>
+                        <Grid
+                          container
+                          item
+                          key={`${run}-heat`}
+                          sm={12}
+                          spacing={1}
+                          justify='flex-start'
+                          alignItems='flex-start'
+                        >
+                          <Grid item sm={1}>
+                          </Grid>
+                          <Grid item sm={1}>
+                            <Container>
+                              <Typography variant='caption'>{run}</Typography>
+                            </Container>
+                          </Grid>
+                          <Grid item sm={10}>
+                            <LatencyHeatmap
+                                reports={reports}
+                                labeler={({ name }) => `${name}`}
+                                maxLatency={state.maxLatency}
+                                maxRequests={state.maxRequests}
+                              />
                           </Grid>
                         </Grid>
                       );
@@ -343,42 +346,54 @@ const App: FunctionComponent = () => {
               <Container>
                 <Paper elevation={2}>
                   <Grid container spacing={3} direction='row'>
-                    <Grid item container sm={12} key={`heat-axis`}>
-                      <Grid item sm={3}>
+                    <Grid container item sm={12} key={`bars-axis`} spacing={1} alignItems='flex-start'>
+                      <Grid item sm={1}>
                         <Container>
-                          <Typography>Requests</Typography>
+                          <Typography>Latency</Typography>
                         </Container>
+                      </Grid>
+                      <Grid item sm={1}>
+                        <Container>
+                          <Typography variant='caption'>baseline</Typography>
+                        </Container>
+                      </Grid>
+                      <Grid item sm={10}>
+                        <LatencyBars
+                            reports={state.reports.baseline}
+                            labeler={({ name }) => `${name}`}
+                            maxLatency={state.maxLatency}
+                            maxRequests={state.maxRequests}
+                            withTopAxis
+                          />
                       </Grid>
                     </Grid>
                     {Array.from(group(state.reports.proxy, r => r.run).values()).flatMap(byRun => {
                       const reports = byRun.sort(compareReportWithinRun);
                       const run = reports[0].run;
                       return (
-                        <Grid item sm={12} key={`${run}-bars`}>
-                          <Container>
-                            <Grid
-                              container
-                              item
-                              sm={12}
-                              spacing={3}
-                              justify='flex-start'
-                              alignItems='center'
-                            >
-                              <Grid item sm={2}>
-                                <Container>
-                                  <Typography variant='caption'>{run}</Typography>
-                                </Container>
-                              </Grid>
-                              <Grid item sm={10}>
-                                <LatencyBars
-                                    reports={reports}
-                                    labeler={({ name }) => `${name}`}
-                                    maxLatency={state.maxLatency}
-                                    maxRequests={state.maxRequests}
-                                  />
-                              </Grid>
-                            </Grid>
-                          </Container>
+                        <Grid
+                          container
+                          item
+                          key={`${run}-bars`}
+                          sm={12}
+                          spacing={1}
+                          justify='flex-start'
+                          alignItems='flex-start'
+                        >
+                          <Grid item sm={1}></Grid>
+                          <Grid item sm={1}>
+                            <Container>
+                              <Typography variant='caption'>{run}</Typography>
+                            </Container>
+                          </Grid>
+                          <Grid item sm={10}>
+                            <LatencyBars
+                                reports={reports}
+                                labeler={({ name }) => `${name}`}
+                                maxLatency={state.maxLatency}
+                                maxRequests={state.maxRequests}
+                              />
+                          </Grid>
                         </Grid>
                       );
                     })}
