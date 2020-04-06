@@ -6,21 +6,12 @@ import { Box, CssBaseline, Container, Grid, Paper, Typography } from "@material-
 
 import * as Fortio from "./fortio";
 
-enum Protocol {
-  Http1 = "http1",
-  Grpc = "grpc",
-}
-
-enum Direction {
-  In = "in",
-  Out = "out",
-}
+type Kind = "baseline" | "proxy";
 
 interface Report {
-  protocol: Protocol;
-  rate: number;
-  direction: Direction;
-  build: string;
+  run: string;
+  kind: Kind;
+  test: string;
   fortio: Fortio.Report;
 }
 
@@ -30,7 +21,18 @@ type Reports = Array<Report>;
 
 const getReports = async () => {
   const rsp = await fetch("/reports.json");
-  return await rsp.json();
+  const reports = await rsp.json();
+  return reports.map((fortio: Fortio.Report) => {
+    console.log(fortio.Labels);
+    let labels = JSON.parse(fortio.Labels);
+    let run = labels["run"];
+
+    if (labels["baseline"]) {
+      return { kind: "baseline", test: labels["baseline"], run, fortio };
+    }
+
+    return { kind: "proxy", test: labels["proxy"], run, fortio };
+  });
 }
 
 const SvgStyled = styled.svg`
@@ -40,9 +42,14 @@ const SvgStyled = styled.svg`
 
 const rowHeight = 17;
 
-type Props = { reports: Reports, labeler: LabelReport };
+type Props = {
+  reports: Reports,
+  labeler: LabelReport,
+  maxLatency: number,
+  maxRequests: number,
+};
 
-const LatencyHeatmap: FunctionComponent<Props> = ({ reports, labeler }) => {
+const LatencyHeatmap: FunctionComponent<Props> = ({ reports, labeler, maxLatency, maxRequests }) => {
     let drawReports = (element: SVGSVGElement) => {
       if (reports.length === 0) {
         return;
@@ -51,9 +58,6 @@ const LatencyHeatmap: FunctionComponent<Props> = ({ reports, labeler }) => {
       const { width } = element.getBoundingClientRect();
       const height = rowHeight * reports.length;
 
-      const maxLatency = d3.max(reports, ({ fortio }) =>
-        d3.max(fortio.DurationHistogram.Data, d => d.End)
-      );
       const x = d3
         .scaleLinear()
         .domain([0, maxLatency!])
@@ -71,38 +75,35 @@ const LatencyHeatmap: FunctionComponent<Props> = ({ reports, labeler }) => {
         .attr("preserveAspectRatio", "xMinYMin meet")
         .attr("viewBox", `0 0 ${width} ${height}`);
 
-      const maxCount = d3.max(reports, ({ fortio }) =>
-        d3.max(fortio.DurationHistogram.Data, d => d.Count)
-      );
       const boxColor = d3
         .scaleSequential(d3.interpolateYlOrRd)
-        .domain([0, Math.pow(maxCount!, 0.5)]);
+        .domain([0, Math.pow(maxRequests!, 0.5)]);
       const barColor = d3
         .scaleOrdinal(d3.schemeYlOrRd[5])
         .domain(["50", "75", "90", "99", "99.9"]);
 
-      svg.append("g").call(g =>
-        g
-          .attr("transform", `translate(0,${rowHeight})`)
-          .call(
-            d3
-              .axisTop(x)
-              .tickSize(width / 100)
-              .tickFormat(n => `${n.valueOf() * 1000}ms`)
-          )
-          .call(g => g.selectAll(".domain").remove())
-      );
+      // svg.append("g").call(g =>
+      //   g
+      //     .attr("transform", `translate(0,${rowHeight})`)
+      //     .call(
+      //       d3
+      //         .axisTop(x)
+      //         .tickSize(width / 1000)
+      //         .tickFormat(n => `${n.valueOf() * 1000}ms`)
+      //     )
+      //     .call(g => g.selectAll(".domain").remove())
+      // );
 
       svg.append("g").call(g =>
         g
-          .attr("transform", `translate(60,${rowHeight})`)
+          .attr("transform", `translate(60,0)`)
           .call(d3.axisLeft(y).tickSizeOuter(0))
-        //.call(g => g.selectAll(".domain").remove())
+          .call(g => g.selectAll(".domain").remove())
       );
 
       const row = svg
         .append("g")
-        .attr("transform", r => `translate(0,${rowHeight})`)
+        .attr("transform", r => `translate(0)`)
         .selectAll("g")
         .data(reports)
         .join("g")
@@ -118,7 +119,7 @@ const LatencyHeatmap: FunctionComponent<Props> = ({ reports, labeler }) => {
         .attr("height", y.bandwidth() - 1)
         .attr("fill", d => boxColor(Math.pow(d.Count, 0.5)))
         .append("title")
-        .text(d => `${d.Count} reqs [${d.Start}ms..${d.End}ms)`);
+        .text(d => `${d.Count} reqs [${d.Start * 1000}ms..${d.End * 1000}ms)`);
 
       row
         .append("g")
@@ -131,14 +132,14 @@ const LatencyHeatmap: FunctionComponent<Props> = ({ reports, labeler }) => {
         .attr("height", y.bandwidth() / 3)
         .attr("fill", p => barColor(`${p.Percentile}`))
         .append("title")
-        .text(p => `${p.Percentile} percentile ${p.Value}ms`);
+        .text(p => `${p.Percentile} percentile ${p.Value * 1000}ms`);
     };
 
     return <SvgStyled ref={useCallback(drawReports, [reports])} />;
   };
 
 
-const LatencyBars: FunctionComponent<Props> = ({ reports, labeler }) => {
+const LatencyBars: FunctionComponent<Props> = ({ reports, labeler, maxLatency, maxRequests }) => {
     let drawReports = (element: SVGSVGElement) => {
       if (reports.length === 0) {
         return;
@@ -161,10 +162,9 @@ const LatencyBars: FunctionComponent<Props> = ({ reports, labeler }) => {
       const { width } = element.getBoundingClientRect();
       const height = rowHeight * reports.length;
 
-      const maxCount = d3.max(reports, ({ fortio }) => fortio.DurationHistogram.Count);
       const x = d3
         .scaleLinear()
-        .domain([0, maxCount!])
+        .domain([0, maxRequests!])
         .rangeRound([60, width]);
 
       const y = d3
@@ -179,33 +179,32 @@ const LatencyBars: FunctionComponent<Props> = ({ reports, labeler }) => {
         .attr("preserveAspectRatio", "xMinYMin meet")
         .attr("viewBox", `0 0 ${width} ${height}`);
 
-      const maxLatency = d3.max(reports, ({ fortio }) => fortio.DurationHistogram.Max);
       const boxColor = d3
         .scaleSequential(d3.interpolateYlGnBu)
         .domain([0, Math.pow(maxLatency!, 0.5)]);
 
-      svg.append("g").call(g =>
-        g
-          .attr("transform", `translate(0,${rowHeight})`)
-          .call(
-            d3
-              .axisTop(x)
-              .tickSize(width / 1000)
-              .tickFormat(n => `${n.valueOf()/ 1000}K`)
-          )
-          .call(g => g.selectAll(".domain").remove())
-      );
+      // svg.append("g").call(g =>
+      //   g
+      //     .attr("transform", `translate(0,${rowHeight})`)
+      //     .call(
+      //       d3
+      //         .axisTop(x)
+      //         .tickSize(width / 1000)
+      //         .tickFormat(n => `${n.valueOf()/ 1000}K`)
+      //     )
+      //     .call(g => g.selectAll(".domain").remove())
+      // );
 
       svg.append("g").call(g =>
         g
-          .attr("transform", `translate(60,${rowHeight})`)
+          .attr("transform", `translate(60,0)`)
           .call(d3.axisLeft(y).tickSizeOuter(0))
         //.call(g => g.selectAll(".domain").remove())
       );
 
       const row = svg
         .append("g")
-        .attr("transform", r => `translate(0,${rowHeight})`)
+        .attr("transform", r => `translate(0,0)`)
         .selectAll("g")
         .data(reports)
         .join("g")
@@ -227,34 +226,45 @@ const LatencyBars: FunctionComponent<Props> = ({ reports, labeler }) => {
     return <SvgStyled ref={useCallback(drawReports, [reports])} />;
   };
 
-const compareReportWithinBuild = (a: Report, b: Report) => {
-  if (a.direction === b.direction) {
-    if (a.protocol === b.protocol) {
-      return a.rate - b.rate;
-    }
-
-    if (a.protocol < b.protocol) {
+const compareReportWithinRun = (a: Report, b: Report) => {
+  if (a.kind !== b.kind) {
+    if (a.kind === "baseline") {
       return -1;
     }
 
+    // b is baseline
     return 1;
   }
 
-  if (a.direction < b.direction) {
+  if (a.test === b.test) {
+    return 0;
+  }
+
+  if (a.test === 'baseline' || a.test < b.test) {
     return -1;
   }
 
+  // b.test === 'baseline' || a.test > b.test
   return 1;
 };
 
 const App: FunctionComponent = () => {
-  const [reports, setReports] = useState<Reports>([]);
+  type State = { maxLatency: number, maxRequests: number, reports: Reports };
+  const [state, setState] = useState<State>({ maxLatency: 0, maxRequests: 0, reports: [] });
 
   useEffect(() => {
-    getReports().then(rs => {
-      setReports(rs);
+    getReports().then((reports: Reports) => {
+      const maxLatency = d3.max(reports, ({ fortio }) =>
+        d3.max(fortio.DurationHistogram.Data, d => d.End)
+      )!;
+      const maxRequests = d3.max(reports, ({ fortio }) =>
+        d3.max(fortio.DurationHistogram.Data, d => d.Count)
+      )!;
+
+      setState({ maxLatency, maxRequests, reports });
     });
   }, []);
+
 
   return (
     <React.Fragment>
@@ -263,15 +273,11 @@ const App: FunctionComponent = () => {
         <Grid container>
           <Grid item container spacing={5}>
             <Grid item container sm={12} lg={6} spacing={2} key='heat'>
-              <Grid item>
-                <Container>
-                  <Typography variant='h6'>By latency</Typography>
-                </Container>
-              </Grid>
-              {Array.from(group(reports, r => r.build).values()).flatMap(byBuild => {
-                const reports = byBuild.sort(compareReportWithinBuild);
+              {Array.from(group(state.reports, r => r.run).values()).flatMap(byRun => {
+                const reports = byRun.sort(compareReportWithinRun);
+                const run = reports[0].run;
                 return (
-                  <Grid item sm={12} key={`${reports[0].build}-heat`}>
+                  <Grid item sm={12} key={`${run}-heat`}>
                     <Paper>
                       <Grid
                         container
@@ -283,7 +289,7 @@ const App: FunctionComponent = () => {
                       >
                         <Grid item sm={1}>
                           <Container>
-                            <Typography variant='caption'>{reports[0].build}</Typography>
+                            <Typography variant='caption'>{run}</Typography>
                           </Container>
                         </Grid>
                         <Grid item sm={11}>
@@ -291,7 +297,9 @@ const App: FunctionComponent = () => {
                             <Box height={`${rowHeight * (reports.length + 2)}px`} p='10px'>
                               <LatencyHeatmap
                                   reports={reports}
-                                  labeler={({ direction, protocol, rate }) => `${direction} ${protocol} ${rate / 1000}K`}
+                                  labeler={({ kind, test }) => `${kind} ${test}`}
+                                  maxLatency={state.maxLatency}
+                                  maxRequests={state.maxRequests}
                                 />
                             </Box>
                           </Paper>
@@ -303,17 +311,11 @@ const App: FunctionComponent = () => {
               })}
             </Grid>
             <Grid item container sm={12} lg={6} spacing={2} key='bars'>
-
-              <Grid item>
-                <Container>
-                  <Typography variant='h6'>By requests</Typography>
-                </Container>
-              </Grid>
-              {Array.from(group(reports, r => r.build).values()).flatMap(byBuild => {
-                const reports = byBuild.sort(compareReportWithinBuild);
-                const build = reports[0].build;
+              {Array.from(group(state.reports, r => r.run).values()).flatMap(byRun => {
+                const reports = byRun.sort(compareReportWithinRun);
+                const run = reports[0].run;
                 return (
-                  <Grid item sm={12} key={`${build}-bars`}>
+                  <Grid item sm={12} key={`${run}-bars`}>
                     <Paper>
                       <Grid
                         container
@@ -325,7 +327,7 @@ const App: FunctionComponent = () => {
                       >
                         <Grid item sm={1}>
                           <Container>
-                            <Typography variant='caption'>{build}</Typography>
+                            <Typography variant='caption'>{run}</Typography>
                           </Container>
                         </Grid>
                         <Grid item sm={11}>
@@ -333,7 +335,9 @@ const App: FunctionComponent = () => {
                             <Box height={`${rowHeight * (reports.length + 2)}px`} p='10px'>
                               <LatencyBars
                                   reports={reports}
-                                  labeler={({ direction, protocol, rate }) => `${direction} ${protocol} ${rate / 1000}K`}
+                                  labeler={({ kind, test }) => `${kind} ${test}`}
+                                  maxLatency={state.maxLatency}
+                                  maxRequests={state.maxRequests}
                                 />
                             </Box>
                           </Paper>

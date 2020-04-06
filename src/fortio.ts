@@ -1,4 +1,5 @@
 export interface Report {
+    Labels: string;
     ActualQPS: number;
     ActualDuration: number;
     DurationHistogram: DurationHistogram;
