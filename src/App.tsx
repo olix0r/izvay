@@ -24,7 +24,7 @@ interface Reports {
 
 const getReports = async () => {
   const rsp = await fetch("/reports.json");
-  return (await rsp.json()).reduce(
+  const reports = (await rsp.json()).reduce(
     (accum: Reports, fortio: Fortio.Report) => {
       let labels = JSON.parse(fortio.Labels);
       let run = labels["run"];
@@ -38,6 +38,7 @@ const getReports = async () => {
       return accum;
     },
     { proxy: [], baseline: [] });
+  return reports;
 }
 
 const SvgStyled = styled.svg`
@@ -52,9 +53,11 @@ type Props = {
   labeler: LabelReport,
   maxLatency: number,
   maxRequests: number,
+  withYAxis?: boolean,
 };
 
-const LatencyHeatmap: FunctionComponent<Props> = ({ reports, labeler, maxLatency, maxRequests }) => {
+const LatencyHeatmap: FunctionComponent<Props> = ({ reports, labeler, maxLatency, maxRequests, withYAxis }) => {
+    console.log("heatmap", reports);
     let drawReports = (element: SVGSVGElement) => {
       if (reports.length === 0) {
         return;
@@ -87,28 +90,32 @@ const LatencyHeatmap: FunctionComponent<Props> = ({ reports, labeler, maxLatency
         .scaleOrdinal(d3.schemeYlOrRd[5])
         .domain(["50", "75", "90", "99", "99.9"]);
 
-      // svg.append("g").call(g =>
-      //   g
-      //     .attr("transform", `translate(0,${rowHeight})`)
-      //     .call(
-      //       d3
-      //         .axisTop(x)
-      //         .tickSize(width / 1000)
-      //         .tickFormat(n => `${n.valueOf() * 1000}ms`)
-      //     )
-      //     .call(g => g.selectAll(".domain").remove())
-      // );
+      let offset = 0;
+      if (withYAxis) {
+        svg.append("g").call(g =>
+          g
+            .attr("transform", `translate(0,${rowHeight})`)
+            .call(
+              d3
+                .axisTop(x)
+                .tickSize(rowHeight / 3)
+                .tickFormat(n => `${n.valueOf() * 1000}ms`)
+            )
+            .call(g => g.selectAll(".domain").remove())
+        );
+        offset = rowHeight;
+      }
 
       svg.append("g").call(g =>
         g
-          .attr("transform", `translate(60,0)`)
+          .attr("transform", `translate(60,${offset})`)
           .call(d3.axisLeft(y).tickSizeOuter(0))
           .call(g => g.selectAll(".domain").remove())
       );
 
       const row = svg
         .append("g")
-        .attr("transform", r => `translate(0)`)
+        .attr("transform", r => `translate(0,${offset})`)
         .selectAll("g")
         .data(reports)
         .join("g")
@@ -266,7 +273,9 @@ const App: FunctionComponent = () => {
         d3.max(fortio.DurationHistogram.Data, d => d.Count)
       )!;
 
-      setState({ maxLatency, maxRequests, reports });
+      const s = { maxLatency, maxRequests, reports };
+      console.log(s);
+      setState(s);
     });
   }, []);
 
@@ -275,24 +284,37 @@ const App: FunctionComponent = () => {
     <React.Fragment>
       <CssBaseline />
       <Container maxWidth='xl'>
-        <Grid container>
-          <Grid item container spacing={5}>
-            <Grid item sm={12} lg={6} key='heat'>
-              <Container>
+        <Grid container spacing={5}>
+          <Grid item sm={12} lg={6} key='heat'>
+            <Container>
               <Paper elevation={2}>
-                <Grid container sm={12} lg={6} spacing={3} direction='row'>
-                  <Grid item container sm={12} key={`heat-axis`}>
-                    <Grid item sm={3}>
-                      <Container>
-                        <Typography variant='caption'>Latency</Typography>
-                      </Container>
-                    </Grid>
+                <Grid container spacing={3} direction='row'>
+                  <Grid item sm={12} key={`heat-axis`}>
+                    <Box height={`${rowHeight * (3 + state.reports.baseline.length)}`}>
+                      <Grid container>
+                        <Grid item sm={2}>
+                          <Container>
+                            <Typography variant='caption'>Latency</Typography>
+                          </Container>
+                        </Grid>
+                        <Grid item sm={10}>
+                          <LatencyHeatmap
+                              reports={state.reports.baseline}
+                              labeler={({ name }) => `${name}`}
+                              maxLatency={state.maxLatency}
+                              maxRequests={state.maxRequests}
+                              withYAxis
+                            />
+                        </Grid>
+                      </Grid>
+                    </Box>
                   </Grid>
                   {Array.from(group(state.reports.proxy, r => r.run).values()).flatMap(byRun => {
                     const reports = byRun.sort(compareReportWithinRun);
                     const run = reports[0].run;
                     return (
                       <Grid item sm={12} key={`${run}-heat`}>
+                        <Box height={`${rowHeight * (1 + reports.length)}`}>
                           <Grid
                             container
                             item
@@ -307,28 +329,28 @@ const App: FunctionComponent = () => {
                               </Container>
                             </Grid>
                             <Grid item sm={10}>
-                              <Box height={`${rowHeight * (2 + reports.length)}`}>
                                 <LatencyHeatmap
                                     reports={reports}
                                     labeler={({ name }) => `${name}`}
                                     maxLatency={state.maxLatency}
                                     maxRequests={state.maxRequests}
                                   />
-                              </Box>
                             </Grid>
                           </Grid>
+                        </Box>
                       </Grid>
                     );
                   })}
                 </Grid>
-                </Paper>
-              </Container>
-            </Grid>
-            <Grid item sm={12} lg={6} spacing={2} key='bars'>
-              <Paper>
-                <React.Fragment>
-                  <Grid item container sm={12} key={`bars-axis`}>
-                    <Grid item sm={3} key={`bars-axis`}>
+              </Paper>
+            </Container>
+          </Grid>
+          <Grid item sm={12} lg={6} key='bars'>
+            <Container>
+              <Paper elevation={2}>
+                <Grid container spacing={3} direction='row'>
+                  <Grid item container sm={12} key={`heat-axis`}>
+                    <Grid item sm={3}>
                       <Container>
                         <Typography variant='caption'>Requests</Typography>
                       </Container>
@@ -339,7 +361,7 @@ const App: FunctionComponent = () => {
                     const run = reports[0].run;
                     return (
                       <Grid item sm={12} key={`${run}-bars`}>
-                        <Paper>
+                        <Container>
                           <Grid
                             container
                             item
@@ -354,25 +376,23 @@ const App: FunctionComponent = () => {
                               </Container>
                             </Grid>
                             <Grid item sm={10}>
-                              <Paper>
-                                <Box height={`${rowHeight * (reports.length)}px`}>
-                                  <LatencyBars
-                                      reports={reports}
-                                      labeler={({ name }) => `${name}`}
-                                      maxLatency={state.maxLatency}
-                                      maxRequests={state.maxRequests}
-                                    />
-                                </Box>
-                              </Paper>
+                              <Box height={`${rowHeight * (reports.length)}px`}>
+                                <LatencyBars
+                                    reports={reports}
+                                    labeler={({ name }) => `${name}`}
+                                    maxLatency={state.maxLatency}
+                                    maxRequests={state.maxRequests}
+                                  />
+                              </Box>
                             </Grid>
                           </Grid>
-                        </Paper>
+                        </Container>
                       </Grid>
                     );
                   })}
-                </React.Fragment>
+                </Grid>
               </Paper>
-            </Grid>
+            </Container>
           </Grid>
         </Grid>
       </Container>
