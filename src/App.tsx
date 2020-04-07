@@ -2,7 +2,7 @@ import * as d3 from "d3";
 import { group } from "d3-array"
 import React, { FunctionComponent, useCallback, useEffect, useState } from "react";
 import styled from "@emotion/styled";
-import { CssBaseline, Container, Grid, Paper, Typography } from "@material-ui/core";
+import { CssBaseline, Container, Grid, Hidden, Paper, Typography } from "@material-ui/core";
 
 import * as Fortio from "./fortio";
 
@@ -289,15 +289,10 @@ const App: FunctionComponent = () => {
                     <Grid container item sm={12} key={`heat-axis`} spacing={1} alignItems='flex-start'>
                       <Grid item sm={1}>
                         <Container>
-                          <Typography>Latency</Typography>
-                        </Container>
-                      </Grid>
-                      <Grid item sm={1}>
-                        <Container>
                           <Typography variant='caption'>baseline</Typography>
                         </Container>
                       </Grid>
-                      <Grid item sm={10}>
+                      <Grid item sm={11}>
                         <LatencyHeatmap
                             reports={state.reports.baseline}
                             labeler={({ name }) => `${name}`}
@@ -321,13 +316,11 @@ const App: FunctionComponent = () => {
                           alignItems='flex-start'
                         >
                           <Grid item sm={1}>
-                          </Grid>
-                          <Grid item sm={1}>
                             <Container>
                               <Typography variant='caption'>{run}</Typography>
                             </Container>
                           </Grid>
-                          <Grid item sm={10}>
+                          <Grid item sm={11}>
                             <LatencyHeatmap
                                 reports={reports}
                                 labeler={({ name }) => `${name}`}
@@ -347,17 +340,14 @@ const App: FunctionComponent = () => {
                 <Paper elevation={2}>
                   <Grid container spacing={3} direction='row'>
                     <Grid container item sm={12} key={`bars-axis`} spacing={1} alignItems='flex-start'>
-                      <Grid item sm={1}>
-                        <Container>
-                          <Typography>Latency</Typography>
-                        </Container>
-                      </Grid>
-                      <Grid item sm={1}>
-                        <Container>
-                          <Typography variant='caption'>baseline</Typography>
-                        </Container>
-                      </Grid>
-                      <Grid item sm={10}>
+                      <Hidden lgUp>
+                        <Grid item sm={1}>
+                          <Container>
+                            <Typography variant='caption'>baseline</Typography>
+                          </Container>
+                        </Grid>
+                      </Hidden>
+                      <Grid item sm={11} lg={12}>
                         <LatencyBars
                             reports={state.reports.baseline}
                             labeler={({ name }) => `${name}`}
@@ -380,13 +370,14 @@ const App: FunctionComponent = () => {
                           justify='flex-start'
                           alignItems='flex-start'
                         >
-                          <Grid item sm={1}></Grid>
-                          <Grid item sm={1}>
-                            <Container>
-                              <Typography variant='caption'>{run}</Typography>
-                            </Container>
-                          </Grid>
-                          <Grid item sm={10}>
+                          <Hidden lgUp>
+                            <Grid item sm={1}>
+                              <Container>
+                                <Typography variant='caption'>{run}</Typography>
+                              </Container>
+                            </Grid>
+                          </Hidden>
+                          <Grid item sm={11} lg={12}>
                             <LatencyBars
                                 reports={reports}
                                 labeler={({ name }) => `${name}`}
