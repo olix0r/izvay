@@ -61,7 +61,7 @@ const LatencyHeatmap: FunctionComponent<Props> = ({ reports, labeler, maxLatency
       const x = d3
         .scaleLinear()
         .domain([0, maxLatency!])
-        .rangeRound([60, width]);
+        .rangeRound([60, width - 15]);
 
       const y = d3
         .scaleBand()
@@ -130,7 +130,7 @@ const LatencyHeatmap: FunctionComponent<Props> = ({ reports, labeler, maxLatency
         .join("rect")
         .attr("x", p => x(p.Value))
         .attr("y", y.bandwidth() / 3)
-        .attr("width", 3)
+        .attr("width", 2)
         .attr("height", y.bandwidth() / 3)
         .attr("fill", p => barColor(`${p.Percentile}`))
         .append("title")
@@ -167,7 +167,7 @@ const LatencyBars: FunctionComponent<Props> = ({ reports, labeler, maxLatency, m
       const x = d3
         .scaleLinear()
         .domain([0, maxRequests!])
-        .rangeRound([60, width]);
+        .rangeRound([60, width - 15]);
 
       const y = d3
         .scaleBand()
@@ -281,118 +281,135 @@ const App: FunctionComponent = () => {
     <React.Fragment>
       <CssBaseline />
       <Container maxWidth='xl'>
-          <Grid container spacing={5}>
-            <Grid item sm={12} xl={6} key='heat'>
-              <Container>
-                <Paper elevation={2}>
-                  <Grid container spacing={3} direction='row'>
-                    <Grid container item sm={12} key={`heat-axis`} spacing={1} alignItems='flex-start'>
-                      <Grid item sm={1}>
-                        <Container>
-                          <Typography variant='caption'>baseline</Typography>
-                        </Container>
-                      </Grid>
-                      <Grid item sm={11}>
-                        <LatencyHeatmap
-                            reports={state.reports.baseline}
-                            labeler={({ name }) => `${name}`}
-                            maxLatency={state.maxLatency}
-                            maxRequests={state.maxRequests}
-                            withTopAxis
-                          />
-                      </Grid>
-                    </Grid>
-                    {Array.from(group(state.reports.proxy, r => r.run).values()).flatMap(byRun => {
-                      const reports = byRun.sort(compareReportWithinRun);
-                      const run = reports[0].run;
-                      return (
-                        <Grid
-                          container
-                          item
-                          key={`${run}-heat`}
-                          sm={12}
-                          spacing={1}
-                          justify='flex-start'
-                          alignItems='flex-start'
-                        >
+        <Grid container spacing={5}>
+          <Grid item sm={12}></Grid>
+          <Grid item sm={12} xl={6} key='heat'>
+              <Paper elevation={2}>
+                <Grid container spacing={3} direction='row'>
+                  <Grid item sm={12} key={`heat-axis`}>
+                    <Container>
+                      <Paper elevation={2}>
+                        <Grid container spacing={1} alignItems='flex-start'>
                           <Grid item sm={1}>
                             <Container>
-                              <Typography variant='caption'>{run}</Typography>
+                              <Typography variant='caption'>baseline</Typography>
                             </Container>
                           </Grid>
                           <Grid item sm={11}>
                             <LatencyHeatmap
-                                reports={reports}
+                                reports={state.reports.baseline}
                                 labeler={({ name }) => `${name}`}
                                 maxLatency={state.maxLatency}
                                 maxRequests={state.maxRequests}
+                                withTopAxis
                               />
                           </Grid>
                         </Grid>
-                      );
-                    })}
+                      </Paper>
+                    </Container>
                   </Grid>
-                </Paper>
-              </Container>
-            </Grid>
-            <Grid item sm={12} xl={6} key='bars'>
-              <Container>
-                <Paper elevation={2}>
-                  <Grid container spacing={3} direction='row'>
-                    <Grid container item sm={12} key={`bars-axis`} spacing={1} alignItems='flex-start'>
-                      <Hidden only='xl'>
-                        <Grid item sm={1}>
-                          <Container>
-                            <Typography variant='caption'>baseline</Typography>
-                          </Container>
-                        </Grid>
-                      </Hidden>
-                      <Grid item sm={11} xl={12}>
-                        <LatencyBars
-                            reports={state.reports.baseline}
-                            labeler={({ name }) => `${name}`}
-                            maxLatency={state.maxLatency}
-                            maxRequests={state.maxRequests}
-                            withTopAxis
-                          />
+                  {Array.from(group(state.reports.proxy, r => r.run).values()).flatMap(byRun => {
+                    const reports = byRun.sort(compareReportWithinRun);
+                    const run = reports[0].run;
+                    return (
+                      <Grid item sm={12} key={`${run}-heat`}>
+                        <Container>
+                          <Paper elevation={2}>
+                            <Grid
+                              container
+                              spacing={1}
+                              justify='flex-start'
+                              alignItems='flex-start'
+                            >
+                              <Grid item sm={1}>
+                                <Container>
+                                  <Typography variant='caption'>{run}</Typography>
+                                </Container>
+                              </Grid>
+                              <Grid item sm={11}>
+                                <LatencyHeatmap
+                                    reports={reports}
+                                    labeler={({ name }) => `${name}`}
+                                    maxLatency={state.maxLatency}
+                                    maxRequests={state.maxRequests}
+                                  />
+                              </Grid>
+                            </Grid>
+                          </Paper>
+                        </Container>
                       </Grid>
-                    </Grid>
-                    {Array.from(group(state.reports.proxy, r => r.run).values()).flatMap(byRun => {
-                      const reports = byRun.sort(compareReportWithinRun);
-                      const run = reports[0].run;
-                      return (
-                        <Grid
-                          container
-                          item
-                          key={`${run}-bars`}
-                          sm={12}
-                          spacing={1}
-                          justify='flex-start'
-                          alignItems='flex-start'
-                        >
+                    );
+                  })}
+                </Grid>
+              </Paper>
+          </Grid>
+          <Grid item sm={12} xl={6} key='bars'>
+              <Paper elevation={2}>
+                <Grid container spacing={3} direction='row'>
+                  <Grid item sm={12} key={`bars-axis`}>
+                    <Container>
+                      <Paper elevation={2}>
+                        <Grid container spacing={1} alignItems='flex-start'>
                           <Hidden only='xl'>
                             <Grid item sm={1}>
                               <Container>
-                                <Typography variant='caption'>{run}</Typography>
+                                <Typography variant='caption'>baseline</Typography>
                               </Container>
                             </Grid>
                           </Hidden>
                           <Grid item sm={11} xl={12}>
                             <LatencyBars
-                                reports={reports}
+                                reports={state.reports.baseline}
                                 labeler={({ name }) => `${name}`}
                                 maxLatency={state.maxLatency}
                                 maxRequests={state.maxRequests}
+                                withTopAxis
                               />
                           </Grid>
                         </Grid>
-                      );
-                    })}
+                      </Paper>
+                    </Container>
                   </Grid>
-                </Paper>
-              </Container>
-            </Grid>
+                  {Array.from(group(state.reports.proxy, r => r.run).values()).flatMap(byRun => {
+                    const reports = byRun.sort(compareReportWithinRun);
+                    const run = reports[0].run;
+                    return (
+                      <Grid item sm={12} key={`${run}-bars`}>
+                        <Container>
+                          <Paper elevation={2}>
+                            <Grid
+                              container
+                              key={`${run}-bars`}
+                              sm={12}
+                              spacing={1}
+                              justify='flex-start'
+                              alignItems='flex-start'
+                            >
+                              <Hidden only='xl'>
+                                <Grid item sm={1}>
+                                  <Container>
+                                    <Typography variant='caption'>{run}</Typography>
+                                  </Container>
+                                </Grid>
+                              </Hidden>
+                              <Grid item sm={11} xl={12}>
+                                <LatencyBars
+                                    reports={reports}
+                                    labeler={({ name }) => `${name}`}
+                                    maxLatency={state.maxLatency}
+                                    maxRequests={state.maxRequests}
+                                  />
+                              </Grid>
+                            </Grid>
+                          </Paper>
+                        </Container>
+                      </Grid>
+                    );
+                  })}
+                </Grid>
+              </Paper>
           </Grid>
+        </Grid>
       </Container>
     </React.Fragment>
   );
