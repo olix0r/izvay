@@ -1,10 +1,10 @@
 self.__precacheManifest = (self.__precacheManifest || []).concat([
   {
-    "revision": "77506cdd94a34e37263fb06a8c2b743c",
+    "revision": "ca596dae1f14d1b83d2321856e5df130",
     "url": "/izvay/index.html"
   },
   {
-    "revision": "28c69dc85e969c2b973b",
+    "revision": "6a9fe5a3091f06a8ff62",
     "url": "/izvay/static/css/main.5ecd60fb.chunk.css"
   },
   {
@@ -16,8 +16,8 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([
     "url": "/izvay/static/js/2.bc8f4251.chunk.js.LICENSE.txt"
   },
   {
-    "revision": "28c69dc85e969c2b973b",
-    "url": "/izvay/static/js/main.aa8eda90.chunk.js"
+    "revision": "6a9fe5a3091f06a8ff62",
+    "url": "/izvay/static/js/main.1f15ccce.chunk.js"
   },
   {
     "revision": "91681a9d09eaddeddade",
