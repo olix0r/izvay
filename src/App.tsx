@@ -117,8 +117,8 @@ const LatencyHeatmap: FunctionComponent<Props> = ({ reports, labeler, maxLatency
         .data(({ fortio }) => fortio.DurationHistogram.Data)
         .join("rect")
         .attr("x", d => x(d.Start) + 1)
-        .attr("width", d => x(d.End) - x(d.Start) - 1)
-        .attr("height", y.bandwidth() - 1)
+        .attr("width", d => x(d.End) - x(d.Start))
+        .attr("height", y.bandwidth())
         .attr("fill", d => boxColor(Math.pow(d.Count, 0.5)))
         .append("title")
         .text(d => `${d.Count} reqs [${d.Start * 1000}ms..${d.End * 1000}ms)`);
@@ -222,8 +222,8 @@ const LatencyBars: FunctionComponent<Props> = ({ reports, labeler, maxLatency, m
         .data(report => toBuckets(report))
         .join("rect")
         .attr("x", ({ prior }) => x(prior) + 1)
-        .attr("width", ({ prior, bucket }) => Math.max(3, x(prior + bucket.Count) - x(prior) - 2))
-        .attr("height", y.bandwidth() - 1)
+        .attr("width", ({ prior, bucket }) => x(prior + bucket.Count) - x(prior))
+        .attr("height", y.bandwidth())
         .attr("fill", ({ bucket }) => boxColor(Math.pow(bucket.End, 0.5)))
         .append("title")
         .text(({ bucket }) => `${bucket.Count} reqs [${bucket.Start * 1000}ms..${bucket.End * 1000}ms)`);
