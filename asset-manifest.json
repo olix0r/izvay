@@ -1,0 +1,22 @@
+{
+  "files": {
+    "main.css": "/izvay/static/css/main.5ecd60fb.chunk.css",
+    "main.js": "/izvay/static/js/main.aa8eda90.chunk.js",
+    "main.js.map": "/izvay/static/js/main.aa8eda90.chunk.js.map",
+    "runtime-main.js": "/izvay/static/js/runtime-main.8c0fb332.js",
+    "runtime-main.js.map": "/izvay/static/js/runtime-main.8c0fb332.js.map",
+    "static/js/2.bc8f4251.chunk.js": "/izvay/static/js/2.bc8f4251.chunk.js",
+    "static/js/2.bc8f4251.chunk.js.map": "/izvay/static/js/2.bc8f4251.chunk.js.map",
+    "index.html": "/izvay/index.html",
+    "precache-manifest.a4e7eff2d6c8ae470b004228e636cd1d.js": "/izvay/precache-manifest.a4e7eff2d6c8ae470b004228e636cd1d.js",
+    "service-worker.js": "/izvay/service-worker.js",
+    "static/css/main.5ecd60fb.chunk.css.map": "/izvay/static/css/main.5ecd60fb.chunk.css.map",
+    "static/js/2.bc8f4251.chunk.js.LICENSE.txt": "/izvay/static/js/2.bc8f4251.chunk.js.LICENSE.txt"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.8c0fb332.js",
+    "static/js/2.bc8f4251.chunk.js",
+    "static/css/main.5ecd60fb.chunk.css",
+    "static/js/main.aa8eda90.chunk.js"
+  ]
+}
