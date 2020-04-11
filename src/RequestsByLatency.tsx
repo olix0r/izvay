@@ -13,18 +13,17 @@ export type Dimensions = {
 const SvgStyled = styled.svg`
   height: 100%;
   width: 100%;
-  background-color: #ffe;
+  //background-color: #666;
 `;
 
-export const RequestsByLatencyTopAxis: FunctionComponent<Dimensions> =
-    ({ maxLatency, maxRequests, rowHeight }) => {
+export const TopAxis: FunctionComponent<Dimensions> =
+    ({ maxLatency, rowHeight }) => {
         const drawAxis = (element: SVGSVGElement) => {
             if (element === null || !maxLatency) {
                 return;
             }
 
             const { width } = element.getBoundingClientRect();
-            console.log("draw axis", maxLatency, width);
             const svg = d3
                 .select(element)
                 .attr("preserveAspectRatio", "xMinYMin meet")
@@ -37,19 +36,20 @@ export const RequestsByLatencyTopAxis: FunctionComponent<Dimensions> =
 
             svg.append("g").call(g => {
                 g.attr("transform", `translate(0,${rowHeight * 1.5})`)
-                    .call(d3.axisTop(x)
-                        .tickSize(rowHeight / 2)
-                        .tickFormat(n => {
-                            console.log(`draw axis: ${n.valueOf() * 1000}ms`);
-                            return `${n.valueOf() * 1000}ms`;
-                        }))
+                    .call(
+                        d3.axisTop(x)
+                            .tickSize(rowHeight / 2)
+                            .tickFormat(n => `${n.valueOf() * 1000}ms`)
+                    )
             });
         };
 
-        return <SvgStyled ref={useCallback(drawAxis, [maxLatency, maxRequests, rowHeight])} />;
+        return <SvgStyled
+            ref={useCallback(drawAxis, [maxLatency, rowHeight])}
+        />;
     };
 
-export const RequestsByLatencyHeatMap: FunctionComponent<{ report: Report } & Dimensions> =
+export const HeatMap: FunctionComponent<{ report: Report } & Dimensions> =
     ({ report, maxLatency, maxRequests, rowHeight }) => {
         const draw = (element: SVGSVGElement) => {
             if (report === undefined || element === null) {
@@ -79,9 +79,7 @@ export const RequestsByLatencyHeatMap: FunctionComponent<{ report: Report } & Di
                 .attr("transform", `translate(0,0)`)
                 .selectAll("g")
                 .data([report])
-                .join("g")
-                .attr("transform", `translate(0,0)`);
-
+                .join("g");
 
             row
                 .append("g")
@@ -113,5 +111,3 @@ export const RequestsByLatencyHeatMap: FunctionComponent<{ report: Report } & Di
             ref={useCallback(draw, [report, rowHeight, maxLatency, maxRequests])}
         />;
   };
-
-export default RequestsByLatencyHeatMap;
