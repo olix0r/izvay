@@ -186,14 +186,19 @@ const App: FunctionComponent = () => {
                   <Container>
                     <Paper elevation={2}>
                       <Grid container direction='row'>
-                        <Grid container item sm={12}>
+                        <Grid container item sm={12} spacing={1}>
                           <Grid item sm={1}></Grid>
-                          <Grid item sm={11}>
-                            <RequestsByLatencyTopAxis
-                              maxLatency={state.maxLatency}
-                              maxRequests={state.maxRequests}
-                              rowHeight={17}
-                            />
+                          <Grid container item sm={11}>
+                            <Grid container item sm={12} spacing={0} alignItems='flex-start' direction='row'>
+                              <Grid item sm={2}></Grid>
+                              <Grid item sm={10}>
+                                <RequestsByLatencyTopAxis
+                                  maxLatency={state.maxLatency}
+                                  maxRequests={state.maxRequests}
+                                  rowHeight={17}
+                                />
+                              </Grid>
+                            </Grid>
                           </Grid>
                         </Grid>
                         <Grid container item sm={12} spacing={1} alignItems='flex-start'>
@@ -202,13 +207,26 @@ const App: FunctionComponent = () => {
                               <Typography variant='caption'>baseline</Typography>
                             </Container>
                           </Grid>
-                          <Grid item sm={11}>
-                            <RequestsByLatencyHeatMap
-                                report={state.reports.baseline[0]}
-                                maxLatency={state.maxLatency}
-                                maxRequests={state.maxRequests}
-                                rowHeight={17}
-                              />
+                          <Grid container item sm={11}>
+                            <Grid container item sm={12} spacing={0} alignItems='flex-start' direction='row'>
+                              {state.reports.baseline.map((report) => {
+                                return (
+                                  <React.Fragment>
+                                    <Grid item sm={2}>
+                                      <Typography variant='caption'>{report.name}</Typography>
+                                    </Grid>
+                                    <Grid item sm={10}>
+                                      <RequestsByLatencyHeatMap
+                                        report={report}
+                                        maxLatency={state.maxLatency}
+                                        maxRequests={state.maxRequests}
+                                        rowHeight={17}
+                                      />
+                                    </Grid>
+                                  </React.Fragment>
+                                );
+                              })}
+                            </Grid>
                           </Grid>
                         </Grid>
                       </Grid>
@@ -233,13 +251,26 @@ const App: FunctionComponent = () => {
                                 <Typography variant='caption'>{run}</Typography>
                               </Container>
                             </Grid>
-                            <Grid item sm={11}>
-                              <RequestsByLatencyHeatMap
-                                  report={reports[0]}
-                                  maxLatency={state.maxLatency}
-                                  maxRequests={state.maxRequests}
-                                  rowHeight={17}
-                                />
+                            <Grid container item sm={11}>
+                              <Grid container item sm={12} alignItems='flex-start' direction='row'>
+                                {reports.map(report => {
+                                  return (
+                                    <React.Fragment>
+                                      <Grid item sm={2}>
+                                        <Typography variant='caption'>{report.name}</Typography>
+                                      </Grid>
+                                      <Grid item sm={10}>
+                                        <RequestsByLatencyHeatMap
+                                          report={report}
+                                          maxLatency={state.maxLatency}
+                                          maxRequests={state.maxRequests}
+                                          rowHeight={17}
+                                        />
+                                      </Grid>
+                                    </React.Fragment>
+                                  );
+                                })}
+                              </Grid>
                             </Grid>
                           </Grid>
                         </Paper>
