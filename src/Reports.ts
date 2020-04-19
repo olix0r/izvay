@@ -2,7 +2,7 @@ import * as Fortio from "./fortio";
 
 export type Kind = "baseline" | "proxy";
 
-export interface Report {
+export type Report = {
   run: string;
   kind: Kind;
   name: string;
@@ -11,7 +11,7 @@ export interface Report {
 
 export type LabelReport = (r: Report) => string;
 
-export interface Reports {
+export type Reports = {
   baseline: Report[];
   proxy: Report[];
 };

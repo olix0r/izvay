@@ -1,11 +1,11 @@
-export interface Report {
+export type Report = {
     Labels: string;
     ActualQPS: number;
     ActualDuration: number;
     DurationHistogram: DurationHistogram;
-}
+};
 
-export interface DurationHistogram {
+export type DurationHistogram = {
     Count: number;
     Min: number;
     Max: number;
@@ -16,14 +16,14 @@ export interface DurationHistogram {
     Percentiles: Array<Percentile>;
 };
 
-export interface Bucket {
+export type Bucket = {
     Start: number;
     End: number;
     Percent: number;
     Count: number;
 }
 
-export interface Percentile {
+export type Percentile = {
     Percentile: number;
     Value: number;
 }

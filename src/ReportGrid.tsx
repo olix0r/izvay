@@ -4,43 +4,20 @@ import { Container, Grid, Paper, Typography } from "@material-ui/core";
 
 import { Report, Reports } from './Reports';
 
-export interface Dimensions {
+export type Dimensions = {
   maxLatency: number,
   maxRequests: number,
   rowHeight: number,
-}
+};
 
-export interface View {
-  topAxis: React.FC<Dimensions>,
-  viz: React.FC<{ report: Report, dimensions: Dimensions }>,
-}
+export type TopAxis = React.FC<Dimensions>;
+export type Viz = React.FC<{ report: Report, dimensions: Dimensions }>;
+export type View = { topAxis: TopAxis, viz: Viz };
 
 export type Props = {
   dimensions: Dimensions,
   reports: Reports,
   view: View,
-};
-
-const compareReportWithinRun = (a: Report, b: Report) => {
-  if (a.kind !== b.kind) {
-    if (a.kind === "baseline") {
-      return -1;
-    }
-
-    // b is baseline
-    return 1;
-  }
-
-  if (a.name === b.name) {
-    return 0;
-  }
-
-  if (a.name < b.name) {
-    return -1;
-  }
-
-  // b.kind === 'baseline' || a.name > b.name
-  return 1;
 };
 
 const ReportGrid: React.FC<Props> = ({ reports, dimensions, view }) => {
@@ -134,3 +111,26 @@ const ReportGrid: React.FC<Props> = ({ reports, dimensions, view }) => {
 };
 
 export default ReportGrid;
+
+const compareReportWithinRun = (a: Report, b: Report) => {
+  if (a.kind !== b.kind) {
+    if (a.kind === "baseline") {
+      return -1;
+    }
+
+    // b is baseline
+    return 1;
+  }
+
+  if (a.name === b.name) {
+    return 0;
+  }
+
+  if (a.name < b.name) {
+    return -1;
+  }
+
+  // b.kind === 'baseline' || a.name > b.name
+  return 1;
+};
+

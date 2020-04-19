@@ -1,5 +1,5 @@
 import * as d3 from "d3";
-import React, { FunctionComponent, useEffect, useState } from "react";
+import React from "react";
 import { CssBaseline, Container, Grid, Paper } from "@material-ui/core";
 
 import * as Fortio from "./fortio";
@@ -10,8 +10,8 @@ import * as LatencyByRequests from './LatencyByRequests'
 
 // Fetches a list of test results from the server, separating baseline tests from proxy tests.
 const getReports = async () => {
-  const rsp = await fetch("./reports.json");
-  const reports = (await rsp.json()).reduce(
+  const rsp = await fetch("./reports.json").then(rsp => rsp.json());
+  const reports = rsp.reduce(
     (accum: Reports, fortio: Fortio.Report) => {
       let { run, kind, name } = JSON.parse(fortio.Labels);
       accum[kind as Kind].push({ kind, name, run, fortio });
@@ -21,9 +21,9 @@ const getReports = async () => {
   return reports;
 }
 
-const App: FunctionComponent = () => {
+const App: React.FunctionComponent = () => {
   interface State { maxLatency: number, maxRequests: number, reports: Reports };
-  const [state, setState] = useState<State>({
+  const [state, setState] = React.useState<State>({
     maxLatency: 0,
     maxRequests: 0,
     reports: {
@@ -32,7 +32,7 @@ const App: FunctionComponent = () => {
     }
   });
 
-  useEffect(() => {
+  React.useEffect(() => {
     getReports().then((reports: Reports) => {
       const maxLatency = d3.max(
         reports.baseline.concat(reports.proxy),
