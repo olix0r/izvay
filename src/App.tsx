@@ -45,11 +45,6 @@ const App: FunctionComponent = () => {
         ({ fortio }) => fortio.DurationHistogram.Count,
       )!;
 
-      console.log("got reports", {
-        maxLatency,
-        maxRequests,
-        reports
-      });
       setState({
         maxLatency,
         maxRequests,

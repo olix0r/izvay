@@ -2,6 +2,7 @@ import * as d3 from "d3";
 import React, { FunctionComponent, useCallback } from "react";
 import styled from "@emotion/styled";
 
+import { Bucket } from './fortio';
 import { Report } from './Reports';
 
 export type Dimensions = {
@@ -68,9 +69,10 @@ export const HeatMap: FunctionComponent<{ report: Report, dimensions: Dimensions
                 .attr("preserveAspectRatio", "xMinYMin meet")
                 .attr("viewBox", `0 0 ${width} ${dimensions.rowHeight}`);
 
+            const scale = (latency: number) => Math.pow(latency, 1 / 4);
             const boxColor = d3
-                .scaleSequential(d3.interpolateYlOrRd)
-                .domain([0, Math.pow(dimensions.maxRequests!, 0.5)]);
+                .scaleSequential(d3.interpolateGreens)
+                .domain([0, scale(dimensions.maxRequests!)]);
             const barColor = d3
                 .scaleOrdinal(d3.schemeYlOrRd[5])
                 .domain(["50", "75", "90", "99", "99.9"]);
@@ -85,12 +87,12 @@ export const HeatMap: FunctionComponent<{ report: Report, dimensions: Dimensions
             row
                 .append("g")
                 .selectAll("rect")
-                .data(r => r.fortio.DurationHistogram.Data)
+                .data(r => fillGaps(r.fortio.DurationHistogram.Data))
                 .join("rect")
                 .attr("x", d => x(d.Start) + 1)
                 .attr("width", d => x(d.End) - x(d.Start))
                 .attr("height", dimensions.rowHeight)
-                .attr("fill", d => boxColor(Math.pow(d.Count, 0.5)))
+                .attr("fill", d => boxColor(scale(d.Count)))
                 .append("title")
                 .text(d => `${d.Count} reqs [${d.Start * 1000}ms..${d.End * 1000}ms)`);
 
@@ -101,8 +103,8 @@ export const HeatMap: FunctionComponent<{ report: Report, dimensions: Dimensions
                 .join("rect")
                 .attr("x", p => x(p.Value))
                 .attr("y", dimensions.rowHeight / 3)
-                .attr("width", 2)
                 .attr("height", dimensions.rowHeight / 3)
+                .attr("width", dimensions.rowHeight / 4)
                 .attr("fill", p => barColor(`${p.Percentile}`))
                 .append("title")
                 .text(p => `${p.Percentile} percentile ${p.Value * 1000}ms`);
@@ -112,3 +114,19 @@ export const HeatMap: FunctionComponent<{ report: Report, dimensions: Dimensions
             ref={useCallback(draw, [report, dimensions])}
         />;
     };
+
+const fillGaps = (original: Bucket[]) => {
+    let filled: Bucket[] = [];
+    for (let bucket of original) {
+        if (filled.length > 0 && filled[filled.length - 1].End < bucket.Start) {
+            filled.push({
+                Start: filled[filled.length - 1].End,
+                End: bucket.Start,
+                Count: 0,
+                Percent: 0,
+            });
+        }
+        filled.push(bucket);
+    }
+    return filled;
+};

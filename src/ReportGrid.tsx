@@ -43,44 +43,7 @@ const compareReportWithinRun = (a: Report, b: Report) => {
   return 1;
 };
 
-
-// const ReportGroup: React.FC<{ dimensions: Dimensions, view: View, reports: Report[] }> =
-//   ({ reports, dimensions, view }) => {
-//     return (
-//       <Grid container direction='column'>
-//         <Grid container item sm={12}>
-//           <Grid item sm={2}>
-//             <Container>
-//               <Typography>{view.name}</Typography>
-//             </Container>
-//           </Grid>
-//           <Grid item sm={10}>
-//             {view.topAxis(dimensions)}
-//           </Grid>
-//         </Grid>
-//         <Grid container item sm={12} alignItems='flex-start'>
-//           {reports.map((report) => {
-//             return (
-//               <React.Fragment>
-//                 <Grid item sm={2}>
-//                   <Container>
-//                     <Typography variant='caption'>{report.name}</Typography>
-//                   </Container>
-//                 </Grid>
-//                 <Grid item sm={10}>
-//                   {view.viz({ report, dimensions })}
-//                 </Grid>
-//               </React.Fragment>
-//             );
-//           })}
-//         </Grid>
-//       </Grid>
-//     );
-//   };
-
-
 const ReportGrid: React.FC<Props> = ({ reports, dimensions, view }) => {
-  console.log("drawing report grid", { reports, dimensions, view });
   return (
     <Grid item sm={12}>
       <Paper elevation={2}>
@@ -107,10 +70,13 @@ const ReportGrid: React.FC<Props> = ({ reports, dimensions, view }) => {
                     {reports.baseline.map((report) => {
                       return (
                         <React.Fragment key={report.name}>
-                          <Grid item sm={2}>
-                            <Container>
-                              <Typography variant='caption'>{report.name}</Typography>
-                            </Container>
+                          <Grid item container sm={2} key='run' direction='row'>
+                            <Grid item sm={1}></Grid>
+                            <Grid item sm={11}>
+                              <Container>
+                                <Typography variant='caption'>{report.name}</Typography>
+                              </Container>
+                            </Grid>
                           </Grid>
                           <Grid item sm={10}>
                             <view.viz report={report} dimensions={dimensions} />
@@ -140,10 +106,13 @@ const ReportGrid: React.FC<Props> = ({ reports, dimensions, view }) => {
                         {reports.map(report => {
                           return (
                             <React.Fragment key={report.name}>
-                              <Grid item sm={2}>
-                                <Container>
-                                  <Typography variant='caption'>{report.name}</Typography>
-                                </Container>
+                              <Grid item container sm={2} direction='row'>
+                                <Grid item sm={1}></Grid>
+                                <Grid item sm={11}>
+                                  <Container>
+                                    <Typography variant='caption'>{report.name}</Typography>
+                                  </Container>
+                                </Grid>
                               </Grid>
                               <Grid item sm={10}>
                                 <view.viz report={report} dimensions={dimensions} />

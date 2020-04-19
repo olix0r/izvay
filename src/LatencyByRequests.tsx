@@ -2,7 +2,7 @@ import * as d3 from "d3";
 import React, { FunctionComponent, useCallback } from "react";
 import styled from "@emotion/styled";
 
-import { DurationHistogramBucket } from './fortio';
+import * as fortio from './fortio';
 import { Report } from './Reports';
 
 export type Dimensions = {
@@ -19,7 +19,7 @@ const SvgStyled = styled.svg`
 
 interface Bucket {
     prior: number;
-    bucket: DurationHistogramBucket;
+    bucket: fortio.Bucket;
 }
 
 function toBuckets({ fortio }: Report): Bucket[] {
@@ -87,9 +87,10 @@ export const HeatMap: FunctionComponent<{ report: Report, dimensions: Dimensions
                 .attr("preserveAspectRatio", "none")
                 .attr("viewBox", `0 0 ${width} ${dimensions.rowHeight}`);
 
+            const scale = (latency: number) => Math.pow(latency, 1 / 2);
             const boxColor = d3
-                .scaleSequential(d3.interpolateYlGnBu)
-                .domain([0, Math.pow(dimensions.maxLatency!, 0.5)]);
+                .scaleSequential(d3.interpolateBlues)
+                .domain([0, scale(dimensions.maxLatency!)]);
 
             const row = svg
                 .append("g")
@@ -105,7 +106,7 @@ export const HeatMap: FunctionComponent<{ report: Report, dimensions: Dimensions
                 .attr("x", ({ prior }) => x(prior) + 1)
                 .attr("width", ({ prior, bucket }) => x(prior + bucket.Count) - x(prior))
                 .attr("height", dimensions.rowHeight)
-                .attr("fill", ({ bucket }) => boxColor(Math.pow(bucket.End, 0.5)))
+                .attr("fill", ({ bucket }) => boxColor(scale(bucket.End)))
                 .append("title")
                 .text(({ prior, bucket }) => `${prior + bucket.Count} reqs <${bucket.End * 1000}ms`);
         };
