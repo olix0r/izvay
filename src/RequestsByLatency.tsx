@@ -5,9 +5,9 @@ import styled from "@emotion/styled";
 import { Report } from './Reports';
 
 export type Dimensions = {
-  maxLatency: number,
-  maxRequests: number,
-  rowHeight: number,
+    maxLatency: number,
+    maxRequests: number,
+    rowHeight: number,
 }
 
 const SvgStyled = styled.svg`
@@ -26,7 +26,8 @@ export const TopAxis: FunctionComponent<Dimensions> =
             const { width } = element.getBoundingClientRect();
             const svg = d3
                 .select(element)
-                .attr("preserveAspectRatio", "xMinYMin meet")
+                //.attr("preserveAspectRatio", "xMinYMin meet")
+                .attr("preserveAspectRatio", "none")
                 .attr("viewBox", `0 0 ${width} ${rowHeight * 1.5}`);
 
             const x = d3
@@ -49,8 +50,8 @@ export const TopAxis: FunctionComponent<Dimensions> =
         />;
     };
 
-export const HeatMap: FunctionComponent<{ report: Report } & Dimensions> =
-    ({ report, maxLatency, maxRequests, rowHeight }) => {
+export const HeatMap: FunctionComponent<{ report: Report, dimensions: Dimensions }> =
+    ({ report, dimensions }) => {
         const draw = (element: SVGSVGElement) => {
             if (report === undefined || element === null) {
                 return;
@@ -59,17 +60,17 @@ export const HeatMap: FunctionComponent<{ report: Report } & Dimensions> =
 
             const x = d3
                 .scaleLinear()
-                .domain([0, maxLatency!])
+                .domain([0, dimensions.maxLatency!])
                 .rangeRound([15, width - 15]);
 
             const svg = d3
                 .select(element)
                 .attr("preserveAspectRatio", "xMinYMin meet")
-                .attr("viewBox", `0 0 ${width} ${rowHeight}`);
+                .attr("viewBox", `0 0 ${width} ${dimensions.rowHeight}`);
 
             const boxColor = d3
                 .scaleSequential(d3.interpolateYlOrRd)
-                .domain([0, Math.pow(maxRequests!, 0.5)]);
+                .domain([0, Math.pow(dimensions.maxRequests!, 0.5)]);
             const barColor = d3
                 .scaleOrdinal(d3.schemeYlOrRd[5])
                 .domain(["50", "75", "90", "99", "99.9"]);
@@ -88,7 +89,7 @@ export const HeatMap: FunctionComponent<{ report: Report } & Dimensions> =
                 .join("rect")
                 .attr("x", d => x(d.Start) + 1)
                 .attr("width", d => x(d.End) - x(d.Start))
-                .attr("height", rowHeight)
+                .attr("height", dimensions.rowHeight)
                 .attr("fill", d => boxColor(Math.pow(d.Count, 0.5)))
                 .append("title")
                 .text(d => `${d.Count} reqs [${d.Start * 1000}ms..${d.End * 1000}ms)`);
@@ -99,15 +100,15 @@ export const HeatMap: FunctionComponent<{ report: Report } & Dimensions> =
                 .data(({ fortio }) => fortio.DurationHistogram.Percentiles)
                 .join("rect")
                 .attr("x", p => x(p.Value))
-                .attr("y", rowHeight / 3)
+                .attr("y", dimensions.rowHeight / 3)
                 .attr("width", 2)
-                .attr("height", rowHeight / 3)
+                .attr("height", dimensions.rowHeight / 3)
                 .attr("fill", p => barColor(`${p.Percentile}`))
                 .append("title")
                 .text(p => `${p.Percentile} percentile ${p.Value * 1000}ms`);
         };
 
         return <SvgStyled
-            ref={useCallback(draw, [report, rowHeight, maxLatency, maxRequests])}
+            ref={useCallback(draw, [report, dimensions])}
         />;
-  };
+    };

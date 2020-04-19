@@ -1,7 +1,7 @@
 {
   "name": "izvay",
   "version": "0.1.0",
-  "homepage": "http://olix0r.github.io/izvay",
+  "homepage": "http://olix0r.github.io/izvay/",
   "private": true,
   "dependencies": {
     "@emotion/core": "^10.0.28",
