@@ -1,6 +1,7 @@
 {
   "name": "izvay",
   "version": "0.1.0",
+  "homepage": "http://olix0r.github.io/izvay/",
   "private": true,
   "dependencies": {
     "@emotion/core": "^10.0.28",
@@ -24,6 +25,7 @@
     "@typescript-eslint/eslint-plugin": "^2.24.0",
     "@typescript-eslint/parser": "^2.24.0",
     "eslint": "^6.8.0",
+    "gh-pages": "^2.2.0",
     "react-scripts": "^3.4.0",
     "source-map-loader": "^0.2.4",
     "ts-loader": "^6.2.1",
@@ -35,7 +37,9 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "tsc": "$(npm bin)/tsc -p .",
-    "tsc:watch": "$(npm bin)/tsc -w -p ."
+    "tsc:watch": "$(npm bin)/tsc -w -p .",
+    "predeploy": "npm run build",
+    "deploy": "$(npm bin)/gh-pages -d build"
   },
   "eslintConfig": {
     "extends": "react-app"
