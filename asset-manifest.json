@@ -1,22 +1,22 @@
 {
   "files": {
     "main.css": "/izvay/static/css/main.eec7dc27.chunk.css",
-    "main.js": "/izvay/static/js/main.915b2dce.chunk.js",
-    "main.js.map": "/izvay/static/js/main.915b2dce.chunk.js.map",
+    "main.js": "/izvay/static/js/main.a03d73f5.chunk.js",
+    "main.js.map": "/izvay/static/js/main.a03d73f5.chunk.js.map",
     "runtime-main.js": "/izvay/static/js/runtime-main.8c0fb332.js",
     "runtime-main.js.map": "/izvay/static/js/runtime-main.8c0fb332.js.map",
-    "static/js/2.f65d1ea5.chunk.js": "/izvay/static/js/2.f65d1ea5.chunk.js",
-    "static/js/2.f65d1ea5.chunk.js.map": "/izvay/static/js/2.f65d1ea5.chunk.js.map",
+    "static/js/2.2a316fe1.chunk.js": "/izvay/static/js/2.2a316fe1.chunk.js",
+    "static/js/2.2a316fe1.chunk.js.map": "/izvay/static/js/2.2a316fe1.chunk.js.map",
     "index.html": "/izvay/index.html",
-    "precache-manifest.9d2f5762506c3e8d42fa2e60a3deaa07.js": "/izvay/precache-manifest.9d2f5762506c3e8d42fa2e60a3deaa07.js",
+    "precache-manifest.dedf7af6559a0620fabe114ce0326826.js": "/izvay/precache-manifest.dedf7af6559a0620fabe114ce0326826.js",
     "service-worker.js": "/izvay/service-worker.js",
     "static/css/main.eec7dc27.chunk.css.map": "/izvay/static/css/main.eec7dc27.chunk.css.map",
-    "static/js/2.f65d1ea5.chunk.js.LICENSE.txt": "/izvay/static/js/2.f65d1ea5.chunk.js.LICENSE.txt"
+    "static/js/2.2a316fe1.chunk.js.LICENSE.txt": "/izvay/static/js/2.2a316fe1.chunk.js.LICENSE.txt"
   },
   "entrypoints": [
     "static/js/runtime-main.8c0fb332.js",
-    "static/js/2.f65d1ea5.chunk.js",
+    "static/js/2.2a316fe1.chunk.js",
     "static/css/main.eec7dc27.chunk.css",
-    "static/js/main.915b2dce.chunk.js"
+    "static/js/main.a03d73f5.chunk.js"
   ]
 }
