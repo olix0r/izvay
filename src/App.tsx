@@ -5,8 +5,8 @@ import { CssBaseline, Container, Grid, Paper } from "@material-ui/core";
 import * as Fortio from "./fortio";
 import { Kind, Report, Reports } from './Reports'
 import ReportGrid from './ReportGrid'
-import * as RequestsByLatency from './RequestsByLatency'
-import * as LatencyByRequests from './LatencyByRequests'
+import RequestsByLatency from './RequestsByLatency'
+import LatencyByRequests from './LatencyByRequests'
 
 // Fetches a list of test results from the server, separating baseline tests from proxy tests.
 const getReports = async () => {
@@ -65,10 +65,7 @@ const App: React.FunctionComponent = () => {
             <Paper elevation={2}>
               <ReportGrid
                 reports={state.reports}
-                view={{
-                  topAxis: RequestsByLatency.TopAxis,
-                  viz: RequestsByLatency.HeatMap,
-                }}
+                view={RequestsByLatency}
                 dimensions={{
                   maxLatency: state.maxLatency,
                   maxRequests: state.maxRequests,
@@ -81,10 +78,7 @@ const App: React.FunctionComponent = () => {
             <Paper elevation={2}>
               <ReportGrid
                 reports={state.reports}
-                view={{
-                  topAxis: LatencyByRequests.TopAxis,
-                  viz: LatencyByRequests.HeatMap,
-                }}
+                view={LatencyByRequests}
                 dimensions={{
                   maxLatency: state.maxLatency,
                   maxRequests: state.maxRequests,

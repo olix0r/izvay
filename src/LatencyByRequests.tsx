@@ -98,3 +98,10 @@ const toBuckets = ({ fortio }: Report) => {
     }
     return buckets;
 }
+
+export const View: ReportGrid.View = {
+    TopAxis,
+    Viz: HeatMap,
+};
+
+export default View;

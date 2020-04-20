@@ -119,3 +119,10 @@ const fillGaps = (original: Bucket[]) => {
     }
     return filled;
 };
+
+export const View: ReportGrid.View = {
+    TopAxis,
+    Viz: HeatMap,
+};
+
+export default View;

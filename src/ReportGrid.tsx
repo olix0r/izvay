@@ -12,7 +12,7 @@ export type Dimensions = {
 
 export type TopAxis = React.FC<Dimensions>;
 export type Viz = React.FC<{ report: Report, dimensions: Dimensions }>;
-export type View = { topAxis: TopAxis, viz: Viz };
+export type View = { TopAxis: TopAxis, Viz: Viz };
 
 export type Props = {
   dimensions: Dimensions,
@@ -36,7 +36,7 @@ const ReportGrid: React.FC<Props> = ({ reports, dimensions, view }) => {
                       </Container>
                     </Grid>
                     <Grid item sm={10} key='top-axis'>
-                      <view.topAxis
+                      <view.TopAxis
                         maxLatency={dimensions.maxLatency}
                         maxRequests={dimensions.maxRequests}
                         rowHeight={dimensions.rowHeight}
@@ -56,7 +56,7 @@ const ReportGrid: React.FC<Props> = ({ reports, dimensions, view }) => {
                             </Grid>
                           </Grid>
                           <Grid item sm={10}>
-                            <view.viz report={report} dimensions={dimensions} />
+                            <view.Viz report={report} dimensions={dimensions} />
                           </Grid>
                         </React.Fragment>
                       );
@@ -92,7 +92,7 @@ const ReportGrid: React.FC<Props> = ({ reports, dimensions, view }) => {
                                 </Grid>
                               </Grid>
                               <Grid item sm={10}>
-                                <view.viz report={report} dimensions={dimensions} />
+                                <view.Viz report={report} dimensions={dimensions} />
                               </Grid>
                             </React.Fragment>
                           );
