@@ -44,7 +44,7 @@ const ReportGrid: React.FC<Props> = ({ reports, dimensions, view }) => {
                     </Grid>
                   </Grid>
                   <Grid container item sm={12} alignItems='flex-start'>
-                    {reports.baseline.map((report) => {
+                    {reports.baseline.sort(compareReportWithinRun).map((report) => {
                       return (
                         <React.Fragment key={report.name}>
                           <Grid item container sm={2} key='run' direction='row'>
