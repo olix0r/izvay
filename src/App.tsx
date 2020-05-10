@@ -1,19 +1,28 @@
 import * as d3 from "d3";
 import { group } from "d3-array"
-import React, { useEffect, useState } from "react";
-import { makeStyles, createStyles, Theme } from '@material-ui/core/styles';
+import React, { useEffect, useState, } from "react";
+import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
+import AppBar from '@material-ui/core/AppBar';
+import Button from '@material-ui/core/Button';
 import CssBaseline from "@material-ui/core/CssBaseline";
 import Container from "@material-ui/core/Container";
 import Grid from "@material-ui/core/Grid";
-import SpeedDial from '@material-ui/lab/SpeedDial';
-import SpeedDialIcon from '@material-ui/lab/SpeedDialIcon';
-import SpeedDialAction from '@material-ui/lab/SpeedDialAction';
-import Paper from "@material-ui/core/Paper";
+import Toolbar from '@material-ui/core/Toolbar';
+import Typography from '@material-ui/core/Typography';
 
 import * as fortio from "./fortio";
 import ReportGrid, { Section } from './ReportGrid'
 import RequestsByLatency from './RequestsByLatency'
 //import LatencyByRequests from './LatencyByRequests'
+
+const useStyles = makeStyles((theme: Theme) =>
+  createStyles({
+    toolbar: {},
+    title: {
+      flexGrow: 1,
+    },
+  }),
+);
 
 // Fetches a list of test results from the server.
 async function getReports() {
@@ -41,8 +50,8 @@ const RowHeight = 20;
 
 const Baseline = "baseline";
 
-const byTestProfile = {
-  by: "Test Profile",
+const byProfile = {
+  by: "Profile",
   sections: (reports: Report[]) => {
     console.log(reports);
     const sections = group(reports, r => {
@@ -68,14 +77,21 @@ const byTestProfile = {
           if (a.name < b.name || a.name === Baseline) {
             return -1;
           }
-          console.assert(a.name < b.name || b.name === Baseline);
+          console.assert(a.name > b.name || b.name === Baseline);
           return 1;
         }),
       };
+    }).sort((a, b) => {
+      if (a.title === b.title) {
+        return 0;
+      }
+      if (a.title < b.title) {
+        return -1;
+      }
+      return 1;
     });
   },
 };
-
 
 const byRun = {
   by: "Run",
@@ -89,7 +105,7 @@ const byRun = {
     return Array.from(sections).flatMap(([title, rows], i) => {
       return {
         title,
-        showAxis: i === 0,
+        showAxis: true, //i === 0,
         dimensions,
         rows: rows.map(report => {
           const name = report.meta.name;
@@ -106,81 +122,54 @@ const byRun = {
       if (a.title === b.title) {
         return 0;
       }
-      if (a.title < b.title) {
+      if (a.title < b.title || a.title === Baseline) {
         return -1;
       }
+      console.assert(a.title > b.title || b.title === Baseline);
       return 1;
     });
   },
 };
 
-const useStyles = makeStyles((theme: Theme) =>
-  createStyles({
-    optionsDiv: {
-      position: 'static',
-      marginTop: theme.spacing(3),
-      height: 380,
-    },
-    optionsButton: {
-      position: 'absolute',
-      bottom: theme.spacing(2),
-      right: theme.spacing(2),
-    }
-  }),
-);
-
 const App = () => {
   const styles = useStyles();
   const [reports, setReports] = useState<Report[]>([]);
-  const [groupings, setGroupings] = useState({
-    active: byRun,
-    inactive: byTestProfile,
-  });
-  const [optionsOpen, setOptionsOpen] = useState(false);
+  const [grouping, setGrouping] = useState(byRun);
 
   useEffect(() => {
     getReports().then(setReports);
   }, []);
 
+  const unusedGrouping = (grouping === byRun) ? byProfile : byRun;
+
   return (
     <React.Fragment>
       <CssBaseline />
+      <AppBar position="static">
+        <Toolbar className={styles.toolbar}>
+          <Typography variant="h6" className={styles.title}>
+            Proxy Latency Profile by {grouping.by}
+          </Typography>
+          <Button
+            variant='contained'
+            color='inherit'
+            onClick={() => setGrouping(unusedGrouping)}
+          >
+            By {unusedGrouping.by}
+          </Button>
+        </Toolbar>
+      </AppBar>
       <Container maxWidth='xl'>
-        <Grid container spacing={5}>
-          <Grid item sm={12} key='spacer'></Grid>
-          <Grid item sm={12} xl={6} key='requests-by-latency'>
-            <Paper elevation={2}>
-              <ReportGrid
-                sections={groupings.active.sections(reports)}
-                view={RequestsByLatency}
-              />
-            </Paper>
+        <Grid container spacing={2}>
+          <Grid item sm={12} md={6} key='spacer'></Grid>
+          <Grid item sm={12} key='requests-by-latency'>
+            <ReportGrid
+              sections={grouping.sections(reports)}
+              view={RequestsByLatency}
+            />
           </Grid>
         </Grid>
       </Container>
-      <div className={styles.optionsDiv}>
-        <SpeedDial
-          ariaLabel="Options"
-          className={styles.optionsButton}
-          icon={<SpeedDialIcon />}
-          onClose={() => setOptionsOpen(false)}
-          onOpen={() => setOptionsOpen(true)}
-          open={optionsOpen}
-        >
-          <SpeedDialAction
-            key='swap'
-            icon={<SpeedDialIcon />}
-            tooltipTitle={`Group By ${groupings.inactive.by}`}
-            onClick={() => {
-              setGroupings({
-                active: groupings.inactive,
-                inactive: groupings.active,
-              });
-              setOptionsOpen(false);
-            }}
-          />
-        </SpeedDial>
-      </div>
     </React.Fragment >
   );
 };
