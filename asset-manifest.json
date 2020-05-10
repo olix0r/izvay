@@ -1,14 +1,14 @@
 {
   "files": {
     "main.css": "/izvay/static/css/main.eec7dc27.chunk.css",
-    "main.js": "/izvay/static/js/main.a32b2573.chunk.js",
-    "main.js.map": "/izvay/static/js/main.a32b2573.chunk.js.map",
+    "main.js": "/izvay/static/js/main.40d68413.chunk.js",
+    "main.js.map": "/izvay/static/js/main.40d68413.chunk.js.map",
     "runtime-main.js": "/izvay/static/js/runtime-main.8c0fb332.js",
     "runtime-main.js.map": "/izvay/static/js/runtime-main.8c0fb332.js.map",
     "static/js/2.d0f70ba3.chunk.js": "/izvay/static/js/2.d0f70ba3.chunk.js",
     "static/js/2.d0f70ba3.chunk.js.map": "/izvay/static/js/2.d0f70ba3.chunk.js.map",
     "index.html": "/izvay/index.html",
-    "precache-manifest.3eefc9ca3447380826825df8ce664168.js": "/izvay/precache-manifest.3eefc9ca3447380826825df8ce664168.js",
+    "precache-manifest.d797eb42b37d8a210ec4bf27faa3d32e.js": "/izvay/precache-manifest.d797eb42b37d8a210ec4bf27faa3d32e.js",
     "service-worker.js": "/izvay/service-worker.js",
     "static/css/main.eec7dc27.chunk.css.map": "/izvay/static/css/main.eec7dc27.chunk.css.map",
     "static/js/2.d0f70ba3.chunk.js.LICENSE.txt": "/izvay/static/js/2.d0f70ba3.chunk.js.LICENSE.txt"
@@ -17,6 +17,6 @@
     "static/js/runtime-main.8c0fb332.js",
     "static/js/2.d0f70ba3.chunk.js",
     "static/css/main.eec7dc27.chunk.css",
-    "static/js/main.a32b2573.chunk.js"
+    "static/js/main.40d68413.chunk.js"
   ]
 }
