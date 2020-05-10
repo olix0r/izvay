@@ -1,8 +1,10 @@
-import { group } from "d3-array"
 import React from "react";
-import { Container, Grid, Paper, Typography } from "@material-ui/core";
+import Container from "@material-ui/core/Container";
+import Grid from "@material-ui/core/Grid";
+import Paper from "@material-ui/core/Paper";
+import Typography from "@material-ui/core/Typography";
 
-import { Report, Reports } from './Reports';
+import { Report } from "./fortio";
 
 export type Dimensions = {
   maxLatency: number,
@@ -11,83 +13,57 @@ export type Dimensions = {
 };
 
 export type TopAxis = React.FC<Dimensions>;
-export type Viz = React.FC<{ report: Report, dimensions: Dimensions }>;
+export type VizProps = { report: Report, dimensions: Dimensions }
+export type Viz = React.FC<VizProps>;
 export type View = { TopAxis: TopAxis, Viz: Viz };
 
-export type Props = {
+export type Section = {
+  title: string,
+  rows: Row[],
   dimensions: Dimensions,
-  reports: Reports,
+  showAxis: boolean,
+};
+
+export type Row = {
+  name: string,
+  report: Report,
+};
+
+export type Props = {
+  sections: Section[],
   view: View,
 };
 
-const ReportGrid: React.FC<Props> = ({ reports, dimensions, view }) => {
+const ReportGrid: React.FC<Props> = ({ sections, view }) => {
   return (
     <Grid item sm={12}>
       <Paper elevation={2}>
         <Grid container spacing={3} direction='row'>
-          <Grid item sm={12} key='baseline'>
-            <Container>
-              <Paper elevation={2}>
-                <Grid container direction='column'>
-                  <Grid container item sm={12}>
-                    <Grid item sm={2} key='run'>
-                      <Container>
-                        <Typography>baseline</Typography>
-                      </Container>
-                    </Grid>
-                    <Grid item sm={10} key='top-axis'>
-                      <view.TopAxis
-                        maxLatency={dimensions.maxLatency}
-                        maxRequests={dimensions.maxRequests}
-                        rowHeight={dimensions.rowHeight}
-                      />
-                    </Grid>
-                  </Grid>
-                  <Grid container item sm={12} alignItems='flex-start'>
-                    {reports.baseline.sort(compareReportWithinRun).map((report) => {
-                      return (
-                        <React.Fragment key={report.name}>
-                          <Grid item container sm={2} key='run' direction='row'>
-                            <Grid item sm={1}></Grid>
-                            <Grid item sm={11}>
-                              <Container>
-                                <Typography variant='caption'>{report.name}</Typography>
-                              </Container>
-                            </Grid>
-                          </Grid>
-                          <Grid item sm={10}>
-                            <view.Viz report={report} dimensions={dimensions} />
-                          </Grid>
-                        </React.Fragment>
-                      );
-                    })}
-                  </Grid>
-                </Grid>
-              </Paper>
-            </Container>
-          </Grid>
-          {Array.from(group(reports.proxy, r => r.run).values()).flatMap(byRun => {
-            const reports = byRun.sort(compareReportWithinRun);
-            const run = reports[0].run;
+          {sections.map(({ title, rows, dimensions, showAxis }) => {
             return (
-              <Grid item sm={12} key={`${run} `}>
+              <Grid item sm={12} key={`${title} `}>
                 <Container>
                   <Paper elevation={2}>
                     <Grid container direction='column'>
-                      <Grid item sm={12}>
-                        <Container>
-                          <Typography>{run}</Typography>
-                        </Container>
+                      <Grid container item sm={12}>
+                        <Grid item sm={2} key='run'>
+                          <Container>
+                            <Typography>{title}</Typography>
+                          </Container>
+                        </Grid>
+                        <Grid item sm={10} key='top-axis'>
+                          {showAxis && <view.TopAxis {...dimensions} />}
+                        </Grid>
                       </Grid>
                       <Grid container item sm={12} alignItems='flex-start' direction='row'>
-                        {reports.map(report => {
+                        {rows.map(({ name, report }) => {
                           return (
-                            <React.Fragment key={report.name}>
+                            <React.Fragment key={name}>
                               <Grid item container sm={2} direction='row'>
                                 <Grid item sm={1}></Grid>
                                 <Grid item sm={11}>
                                   <Container>
-                                    <Typography variant='caption'>{report.name}</Typography>
+                                    <Typography variant='caption'>{name}</Typography>
                                   </Container>
                                 </Grid>
                               </Grid>
@@ -111,26 +87,3 @@ const ReportGrid: React.FC<Props> = ({ reports, dimensions, view }) => {
 };
 
 export default ReportGrid;
-
-const compareReportWithinRun = (a: Report, b: Report) => {
-  if (a.kind !== b.kind) {
-    if (a.kind === "baseline") {
-      return -1;
-    }
-
-    // b is baseline
-    return 1;
-  }
-
-  if (a.name === b.name) {
-    return 0;
-  }
-
-  if (a.name < b.name) {
-    return -1;
-  }
-
-  // b.kind === 'baseline' || a.name > b.name
-  return 1;
-};
-

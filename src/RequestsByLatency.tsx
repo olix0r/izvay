@@ -77,7 +77,7 @@ export const HeatMap: ReportGrid.Viz = ({ report, dimensions }) => {
         row
             .append("g")
             .selectAll("rect")
-            .data(r => fillGaps(r.fortio.DurationHistogram.Data))
+            .data(r => fillGaps(r.DurationHistogram.Data))
             .join("rect")
             .attr("x", d => x(d.Start) + 1)
             .attr("width", d => x(d.End) - x(d.Start))
@@ -89,7 +89,7 @@ export const HeatMap: ReportGrid.Viz = ({ report, dimensions }) => {
         row
             .append("g")
             .selectAll("rect")
-            .data(({ fortio }) => fortio.DurationHistogram.Percentiles)
+            .data(r => r.DurationHistogram.Percentiles)
             .join("rect")
             .attr("x", p => x(p.Value))
             .attr("y", dimensions.rowHeight / 3)

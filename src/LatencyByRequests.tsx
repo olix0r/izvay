@@ -2,7 +2,7 @@ import * as d3 from "d3";
 import React from "react";
 import styled from "@emotion/styled";
 
-import { Report } from './Reports';
+import { Report } from './fortio';
 import * as ReportGrid from './ReportGrid';
 
 const SvgStyled = styled.svg`
@@ -83,25 +83,27 @@ export const HeatMap: ReportGrid.Viz = ({ report, dimensions }) => {
             .attr("height", dimensions.rowHeight)
             .attr("fill", ({ bucket }) => boxColor(scale(bucket.End)))
             .append("title")
-            .text(({ prior, bucket }) => `${prior + bucket.Count} reqs <${bucket.End * 1000}ms`);
+            .text(({ prior, bucket }) => `${prior + bucket.Count} reqs <${bucket.End * 1000} ms`);
     };
 
     return <SvgStyled ref={React.useCallback(draw, [report, dimensions])} />;
 };
 
-const toBuckets = ({ fortio }: Report) => {
+const toBuckets = (report: Report) => {
     let buckets = [];
     let prior = 0;
-    for (let bucket of fortio.DurationHistogram.Data) {
+    for (let bucket of report.DurationHistogram.Data) {
         buckets.push({ prior, bucket });
         prior += bucket.Count;
     }
     return buckets;
-}
+};
 
-export const View: ReportGrid.View = {
-    TopAxis,
-    Viz: HeatMap,
+export const View = <R extends Report>() => {
+    return {
+        TopAxis,
+        Viz: HeatMap,
+    };
 };
 
 export default View;
