@@ -54,11 +54,7 @@ const Baseline = "baseline";
 const byProfile = {
   by: "Profile",
   sections: (reports: Report[]) => {
-    console.log(reports);
-    const sections = group(reports, r => {
-      console.log(typeof r.meta);
-      return r.meta.name;
-    });
+    const sections = group(reports, r => r.meta.name);
     return Array.from(sections).flatMap(([title, rows]) => {
       return {
         title,
