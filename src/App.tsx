@@ -15,6 +15,7 @@ import ReportGrid, { Section } from './ReportGrid'
 import RequestsByLatency from './RequestsByLatency'
 //import LatencyByRequests from './LatencyByRequests'
 
+
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     toolbar: {},
@@ -114,7 +115,7 @@ const byRun = {
           if (a.name < b.name) {
             return -1;
           }
-          console.assert(a.name < b.name || b.name === Baseline);
+          console.assert(a.name > b.name);
           return 1;
         }),
       };
