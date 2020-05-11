@@ -1,6 +1,6 @@
 import * as d3 from "d3";
 import { group } from "d3-array"
-import React, { useEffect, useReducer, useState, } from "react";
+import React, { useEffect, useState, } from "react";
 import { createStyles, makeStyles, withStyles, Theme } from '@material-ui/core/styles';
 import AppBar from '@material-ui/core/AppBar';
 import CssBaseline from "@material-ui/core/CssBaseline";
