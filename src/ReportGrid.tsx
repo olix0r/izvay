@@ -20,7 +20,6 @@ export type Row = {
   report: Report,
 };
 
-
 export type Dimensions = {
   maxLatency: number,
   maxRequests: number,
@@ -28,13 +27,13 @@ export type Dimensions = {
 };
 
 export type TopAxis = React.FC<Dimensions>;
-export type VizProps = { report: Report, dimensions: Dimensions }
+export type VizProps = { report: Report, dimensions: Dimensions };
 export type Viz = React.FC<VizProps>;
 
 // A strategy for rendering a section.
 export type View = {
-  //
-  TopAxis: TopAxis, Viz: Viz
+  TopAxis: TopAxis,
+  Viz: Viz
 };
 
 type Props = {
@@ -42,11 +41,12 @@ type Props = {
   view: View,
 };
 
+
 const ReportGrid = ({ sections, view }: Props) => {
   return (
     <Grid item sm={12}>
       <Grid container spacing={3} direction='row'>
-        {sections.map(({ title, rows, dimensions, showAxis }) => {
+        {sections.map(({ title, rows, showAxis, dimensions }) => {
           return (
             <Grid item sm={12} lg={6} key={`${title} `}>
               <Container>

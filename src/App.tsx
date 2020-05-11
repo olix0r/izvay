@@ -1,26 +1,49 @@
 import * as d3 from "d3";
 import { group } from "d3-array"
-import React, { useEffect, useState, } from "react";
-import { createStyles, makeStyles, Theme } from '@material-ui/core/styles';
+import React, { useEffect, useReducer, useState, } from "react";
+import { createStyles, makeStyles, withStyles, Theme } from '@material-ui/core/styles';
 import AppBar from '@material-ui/core/AppBar';
-import Button from '@material-ui/core/Button';
 import CssBaseline from "@material-ui/core/CssBaseline";
 import Container from "@material-ui/core/Container";
+import Divider from "@material-ui/core/Divider";
+import FormatAlignJustifyIcon from '@material-ui/icons/FormatAlignJustify';
+import FormatAlignLeftIcon from '@material-ui/icons/FormatAlignLeft';
 import Grid from "@material-ui/core/Grid";
-import Toolbar from '@material-ui/core/Toolbar';
+import HorizontalSplitIcon from '@material-ui/icons/HorizontalSplit';
+import IconButton from '@material-ui/core/IconButton';
+import SvgIcon from '@material-ui/core/SvgIcon';
 import Typography from '@material-ui/core/Typography';
+import ToggleButton from '@material-ui/lab/ToggleButton';
+import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup';
+import Toolbar from '@material-ui/core/Toolbar';
+import VerticalSplitIcon from '@material-ui/icons/VerticalSplit';
 
 import * as fortio from "./fortio";
-import ReportGrid, { Section } from './ReportGrid'
+import ReportGrid, { Section, Dimensions } from './ReportGrid'
 import RequestsByLatency from './RequestsByLatency'
 //import LatencyByRequests from './LatencyByRequests'
+import { ReactComponent as LinkerdIcon } from './linkerd.svg';
+
 
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
+    html: {
+      //width: 'calc(100% - 34px)',
+    },
     toolbar: {},
     title: {
       flexGrow: 1,
+    },
+    paper: {
+      display: 'flex',
+      border: `1px solid ${theme.palette.divider}`,
+      flexWrap: 'wrap',
+    },
+    divider: {
+      alignSelf: 'stretch',
+      height: 'auto',
+      margin: theme.spacing(1, 0.5),
     },
   }),
 );
@@ -43,27 +66,70 @@ type Report = fortio.Report & {
   meta: Meta,
 };
 
-interface Grouping {
-  sections(reports: Report[]): Section[];
+type Grouping = {
+  by: string;
+  defaultScaler: Scaler,
+  sections(reports: Report[], scaler: Scaler): Section[];
 };
-
-const RowHeight = 20;
 
 const Baseline = "baseline";
 
-const byProfile = {
+const RowHeight = 20;
+
+const EmptyDimensions: Dimensions & { showAxis: boolean } = {
+  rowHeight: RowHeight,
+  maxLatency: 0,
+  maxRequests: 0,
+  showAxis: false,
+};
+
+export type Scaler = {
+  scale: (all: Report[]) => (section: Report[]) => Dimensions & { showAxis: boolean };
+}
+
+const AbsoluteScaler: Scaler = {
+  scale: (all: Report[]) => {
+    if (!all || all.length === 0) {
+      return (section: Report[]) => EmptyDimensions;
+    }
+
+    const dimensions = {
+      showAxis: true,
+      rowHeight: RowHeight,
+      maxLatency: d3.max(all, r => r.DurationHistogram.Max)!,
+      maxRequests: d3.max(all, r => r.DurationHistogram.Count)!,
+    };
+    return (section: Report[]) => dimensions;
+  },
+};
+
+const RelativeScaler: Scaler = {
+  scale: (_: Report[]) => {
+    return (section: Report[]) => {
+      if (section.length === 0) {
+        return EmptyDimensions;
+      }
+
+      return {
+        showAxis: true,
+        rowHeight: RowHeight,
+        maxLatency: d3.max(section, r => r.DurationHistogram.Max)!,
+        maxRequests: d3.max(section, r => r.DurationHistogram.Count)!,
+      };
+    }
+  },
+};
+
+const byProfile: Grouping = {
   by: "Profile",
-  sections: (reports: Report[]) => {
+  defaultScaler: RelativeScaler,
+  sections: (reports: Report[], scaler: Scaler) => {
+    const sectionScaler = scaler.scale(reports);
     const sections = group(reports, r => r.meta.name);
     return Array.from(sections).flatMap(([title, rows]) => {
+      const { showAxis, ...dimensions } = sectionScaler(rows)
       return {
-        title,
-        showAxis: true,
-        dimensions: {
-          rowHeight: RowHeight,
-          maxLatency: d3.max(rows, r => r.DurationHistogram.Max)!,
-          maxRequests: d3.max(rows, r => r.DurationHistogram.Count)!,
-        },
+        title, showAxis, dimensions,
         rows: rows.map(report => {
           const name = report.meta.run;
           return { name, report };
@@ -90,20 +156,16 @@ const byProfile = {
   },
 };
 
-const byRun = {
+const byRun: Grouping = {
   by: "Run",
-  sections: (reports: Report[]) => {
+  defaultScaler: AbsoluteScaler,
+  sections: (reports: Report[], scaler: Scaler) => {
+    const sectionScaler = scaler.scale(reports);
     const sections = group(reports, r => r.meta.run);
-    const dimensions = {
-      rowHeight: RowHeight,
-      maxLatency: d3.max(reports, r => r.DurationHistogram.Max)!,
-      maxRequests: d3.max(reports, r => r.DurationHistogram.Count)!,
-    };
     return Array.from(sections).flatMap(([title, rows], i) => {
+      const { showAxis, ...dimensions } = sectionScaler(rows)
       return {
-        title,
-        showAxis: true, //i === 0,
-        dimensions,
+        title, showAxis, dimensions,
         rows: rows.map(report => {
           const name = report.meta.name;
           return { name, report };
@@ -128,32 +190,82 @@ const byRun = {
   },
 };
 
+const OptionsGroup = withStyles((theme) => ({
+  grouped: {
+    margin: theme.spacing(0.5),
+    border: 'none',
+    padding: theme.spacing(0, 1),
+    '&:not(:first-child)': {
+      borderRadius: theme.shape.borderRadius,
+    },
+    '&:first-child': {
+      borderRadius: theme.shape.borderRadius,
+    },
+  },
+}))(ToggleButtonGroup);
+
 const App = () => {
   const styles = useStyles();
-  const [reports, setReports] = useState<Report[]>([]);
-  const [grouping, setGrouping] = useState(byRun);
 
+  const [reports, setReports] = useState<Report[]>([]);
   useEffect(() => {
     getReports().then(setReports);
   }, []);
 
-  const unusedGrouping = (grouping === byRun) ? byProfile : byRun;
+  type State = { grouping: Grouping, scaler: Scaler };
+  const [state, setState] = useState<State>({
+    grouping: byProfile,
+    scaler: byProfile.defaultScaler
+  });
 
   return (
     <React.Fragment>
       <CssBaseline />
       <AppBar position="static">
         <Toolbar className={styles.toolbar}>
+          <IconButton>
+            <SvgIcon component={LinkerdIcon} viewBox="0 0 600 476.6" />
+          </IconButton>
           <Typography variant="h6" className={styles.title}>
-            Proxy Latency Profile by {grouping.by}
+            Proxy Latency by {state.grouping.by}
           </Typography>
-          <Button
-            variant='contained'
-            color='inherit'
-            onClick={() => setGrouping(unusedGrouping)}
+          <OptionsGroup
+            size="small"
+            exclusive value={state.grouping}
+            onChange={(_, g: Grouping) => {
+              console.log("changing grouping", g, g.defaultScaler);
+              setState({ grouping: g, scaler: g.defaultScaler });
+            }}
+            aria-label="Report grouping"
           >
-            By {unusedGrouping.by}
-          </Button>
+            <ToggleButton value={byRun} aria-label="By run" disabled={byRun === state.grouping}>
+              <HorizontalSplitIcon />
+            </ToggleButton>
+            <ToggleButton value={byProfile} aria-label="By profile" disabled={byProfile === state.grouping}>
+              <VerticalSplitIcon />
+            </ToggleButton>
+          </OptionsGroup>
+          {false && (
+            <React.Fragment>
+              <Divider orientation="vertical" className={styles.divider} />
+              <OptionsGroup
+                size="small"
+                exclusive value={state.scaler}
+                onChange={(_, s: Scaler) => {
+                  console.log("changing scale", s);
+                  setState({ grouping: state.grouping, scaler: s || state.grouping.defaultScaler });
+                }}
+                aria-label="Latency scale"
+              >
+                <ToggleButton value={AbsoluteScaler} aria-label="Absolute scale" disabled={AbsoluteScaler === state.scaler}>
+                  <FormatAlignJustifyIcon />
+                </ToggleButton>
+                <ToggleButton value={RelativeScaler} aria-label="Relative scale" disabled={RelativeScaler === state.scaler}>
+                  <FormatAlignLeftIcon />
+                </ToggleButton>
+              </OptionsGroup>
+            </React.Fragment>
+          )}
         </Toolbar>
       </AppBar>
       <Container maxWidth='xl'>
@@ -161,7 +273,7 @@ const App = () => {
           <Grid item sm={12} md={6} key='spacer'></Grid>
           <Grid item sm={12} key='requests-by-latency'>
             <ReportGrid
-              sections={grouping.sections(reports)}
+              sections={state.grouping.sections(reports, state.scaler)}
               view={RequestsByLatency}
             />
           </Grid>

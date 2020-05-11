@@ -11,11 +11,15 @@ const SvgStyled = styled.svg`
   //background-color: #666;
 `;
 
-export const TopAxis: ReportGrid.TopAxis = ({ maxLatency, rowHeight }) => {
+export const TopAxis: ReportGrid.TopAxis = (dimensions) => {
+    console.log('Creating TopAxis', dimensions);
+
     const draw = (element: SVGSVGElement) => {
+        const { maxLatency, rowHeight } = dimensions;
         if (element === null || !maxLatency) {
             return;
         }
+        console.log('Drawing TopAxis', dimensions);
 
         const { width } = element.getBoundingClientRect();
         const svg = d3
@@ -39,14 +43,17 @@ export const TopAxis: ReportGrid.TopAxis = ({ maxLatency, rowHeight }) => {
         });
     };
 
-    return <SvgStyled ref={React.useCallback(draw, [maxLatency, rowHeight])} />;
+    return <SvgStyled ref={React.useCallback(draw, [dimensions])} />;
 };
 
 export const HeatMap: ReportGrid.Viz = ({ report, dimensions }) => {
+    console.log('Creating HeatMap', report, dimensions);
+
     const draw = (element: SVGSVGElement) => {
         if (report === undefined || element === null) {
             return;
         }
+        console.log('Drawing HeatMap', report, dimensions);
         const { width } = element.getBoundingClientRect();
 
         const x = d3

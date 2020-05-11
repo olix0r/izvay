@@ -33,6 +33,7 @@ const configurator = {
         { test: /\.tsx?$/, use: "ts-loader", exclude: /node_modules/ },
         // All output '.js' files will have any sourcemaps re-processed by 'source-map-loader'.
         { test: /\.js$/, enforce: "pre", loader: "source-map-loader", },
+        { test: /\.svg$/, use: ['@svgr/webpack', 'url-loader'], }
       ]
     }
   },
