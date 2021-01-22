@@ -86,10 +86,10 @@ export const HeatMap: ReportGrid.Viz = ({ report, dimensions }) => {
             .selectAll("rect")
             .data(r => fillGaps(r.DurationHistogram.Data))
             .join("rect")
-            .attr("x", d => x(d.Start) + 1)
-            .attr("width", d => x(d.End) - x(d.Start))
+            .attr("x", d => x(d.Start)! + 1)
+            .attr("width", d => x(d.End)! - x(d.Start)!)
             .attr("height", dimensions.rowHeight)
-            .attr("fill", d => boxColor(scale(d.Count)))
+            .attr("fill", d => boxColor(scale(d.Count))!)
             .append("title")
             .text(d => `${d.Count} reqs [${d.Start * 1000}ms..${d.End * 1000}ms)`);
 
@@ -98,11 +98,11 @@ export const HeatMap: ReportGrid.Viz = ({ report, dimensions }) => {
             .selectAll("rect")
             .data(r => r.DurationHistogram.Percentiles)
             .join("rect")
-            .attr("x", p => x(p.Value))
+            .attr("x", p => x(p.Value)!)
             .attr("y", dimensions.rowHeight / 3)
             .attr("height", dimensions.rowHeight / 3)
             .attr("width", dimensions.rowHeight / 6)
-            .attr("fill", p => barColor(`${p.Percentile}`))
+            .attr("fill", p => barColor(`${p.Percentile}`)!)
             .append("title")
             .text(p => `${p.Percentile} percentile ${p.Value * 1000}ms`);
     };

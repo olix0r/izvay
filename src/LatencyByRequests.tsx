@@ -78,10 +78,10 @@ export const HeatMap: ReportGrid.Viz = ({ report, dimensions }) => {
             .selectAll("rect")
             .data(toBuckets)
             .join("rect")
-            .attr("x", ({ prior }) => x(prior) + 1)
-            .attr("width", ({ prior, bucket }) => x(prior + bucket.Count) - x(prior))
+            .attr("x", ({ prior }) => x(prior)! + 1)
+            .attr("width", ({ prior, bucket }) => x(prior + bucket.Count)! - x(prior)!)
             .attr("height", dimensions.rowHeight)
-            .attr("fill", ({ bucket }) => boxColor(scale(bucket.End)))
+            .attr("fill", ({ bucket }) => boxColor(scale(bucket.End))!)
             .append("title")
             .text(({ prior, bucket }) => `${prior + bucket.Count} reqs <${bucket.End * 1000} ms`);
     };
